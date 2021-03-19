@@ -4,6 +4,7 @@ import (
 	"flag"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/Login"
+	"github.com/elivlo/SpotifyHistoryPlaybackSaver/SpotifySaver"
 	"github.com/gobuffalo/envy"
 	log "github.com/sirupsen/logrus"
 )
@@ -62,7 +63,12 @@ func main() {
 	}
 
 	LOG.Info("Start listening to your spotify history...")
-	//SpotifySaver.NewSpotifySaver(LOG)
+	s := SpotifySaver.NewSpotifySaver(LOG)
+	err := s.LoadToken()
+	if err != nil {
+		LOG.Fatalf("Could not load token: %v", err)
+	}
+
 
 	//c.Authenticate(token.AccessToken, token.TokenType, token.RefreshToken, token.Expiry)
 
