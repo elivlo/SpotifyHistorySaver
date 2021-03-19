@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/Login"
 	"github.com/gobuffalo/envy"
@@ -52,14 +51,13 @@ func main() {
 		LOG.Info("Start login to your account...")
 		token, err := Login.Login(ClientId, ClientSecret, "http://localhost:8080/callback")
 		if err != nil {
-			LOG.Fatal(err)
+			LOG.Fatalf("Could not get token: %v", err)
 		}
 
-		fmt.Println(token.AccessToken)
-		fmt.Println(token.Expiry)
-		fmt.Println(token.RefreshToken)
-		fmt.Println(token.TokenType)
-
+		err = Login.SaveToken(token)
+		if err != nil {
+			LOG.Fatalf("Could not save token to file: %v", err)
+		}
 		return
 	}
 

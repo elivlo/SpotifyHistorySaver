@@ -4,12 +4,14 @@ package Login
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -17,6 +19,8 @@ import (
 
 	"github.com/zmb3/spotify"
 )
+
+const tokenFileName = "token.json"
 
 var (
 	logger *log.Entry
@@ -65,7 +69,32 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 	return client.Token()
 }
 
-// initLogger inits a logger with ACCOUNT LOGIN prefix.
+// SaveToken will save access and refresh token to token.json file in exec directory.
+func SaveToken(token *oauth2.Token) error {
+	fileString, err := json.Marshal(token)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(tokenFileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0700)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(fileString)
+	if err != nil {
+		return err
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	logger.Info("Wrote access token to %s/%s", dir, tokenFileName)
+	return nil
+}
+
+// initLogger inits a logger with "ACCOUNT LOGIN" prefix.
 func initLogger() {
 	l := log.New()
 	l.SetLevel(log.InfoLevel)
