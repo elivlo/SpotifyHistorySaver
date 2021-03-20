@@ -10,7 +10,7 @@ import (
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 	"io/ioutil"
-	"time"
+	"sync"
 )
 
 const (
@@ -45,31 +45,40 @@ func NewSpotifySaver(log *log.Entry) (SpotifySaver, error) {
 
 // LoadToken will load the token from file "token.json" in exec directory.
 // It will throw an error when the token is expired.
-func (s SpotifySaver) LoadToken() error {
+func (s *SpotifySaver) LoadToken() error {
 	fileBytes, err := ioutil.ReadFile(tokenFileName)
 	if err != nil {
 		return err
 	}
 
-	var token oauth2.Token
-	err = json.Unmarshal(fileBytes, token)
+	err = json.Unmarshal(fileBytes, &s.token)
 	if err != nil {
 		return err
 	}
-	s.token = token
 
-	if s.token.Expiry.Unix() <= time.Now().Unix() {
+	if !s.token.Valid() && s.token.RefreshToken == "" {
 		return errors.New(fmt.Sprintf("token expired at %v", s.token.Expiry))
 	}
 	return nil
 }
 
 // Authenticate will create a new client from token.
-func (s SpotifySaver) Authenticate() {
+func (s *SpotifySaver) Authenticate(callbackURI, clientID, clientSecret string) {
+	s.auth = spotify.NewAuthenticator(callbackURI, spotify.ScopeUserReadRecentlyPlayed)
+	s.auth.SetAuthInfo(clientID, clientSecret)
 	s.client = s.auth.NewClient(&s.token)
 }
 
 // StartLastSongsWorker
-func (s SpotifySaver) StartLastSongsWorker() error {
-	return nil
+func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup) {
+	songs, err := s.client.PlayerRecentlyPlayedOpt(&spotify.RecentlyPlayedOptions{
+		Limit: 1,
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+	if len(songs) > 0 {
+		fmt.Println(songs[0])
+	}
+	wg.Done()
 }

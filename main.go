@@ -2,16 +2,20 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/spotifySaver"
 	"github.com/gobuffalo/envy"
 	log "github.com/sirupsen/logrus"
+	"sync"
 )
 
 const (
 	ENV_CLIENT_ID = "CLIENT_ID"
 	ENV_CLIENT_SECRET = "CLIENT_SECRET"
+
+	CallbackURI = "http://localhost:8080/callback"
 )
 
 var (
@@ -51,7 +55,7 @@ func main() {
 
 	if *loginFlag {
 		LOG.Info("Start login to your account...")
-		token, err := login.Login(ClientId, ClientSecret, "http://localhost:8080/callback")
+		token, err := login.Login(ClientId, ClientSecret, CallbackURI)
 		if err != nil {
 			LOG.Fatalf("Could not get token: %v", err)
 		}
@@ -64,6 +68,8 @@ func main() {
 	}
 
 	LOG.Info("Start listening to your spotify history...")
+	var wg sync.WaitGroup
+
 	s, err := spotifySaver.NewSpotifySaver(LOG)
 	if err != nil {
 		LOG.Fatalf("Could not connect to database: %v", err)
@@ -73,8 +79,11 @@ func main() {
 	if err != nil {
 		LOG.Fatalf("Could not load token: %v", err)
 	}
-	s.Authenticate()
+	s.Authenticate(CallbackURI, ClientId, ClientSecret)
 
+	wg.Add(1)
+	go s.StartLastSongsWorker(&wg)
+	fmt.Println("huhu")
 
-
+	wg.Wait()
 }
