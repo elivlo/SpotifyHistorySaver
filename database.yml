@@ -1,0 +1,24 @@
+---
+development:
+  dialect: "mysql"
+  database: "spotify_history_playback_saver_dev"
+  host: "localhost"
+  port: "3306"
+  user: "dev"
+  password: "dev"
+
+test:
+  dialect: "mysql"
+  database: "spotify_history_playback_saver_test"
+  host: "localhost"
+  port: "3306"
+  user: "test"
+  password: "test"
+
+production:
+  dialect: "mysql"
+  database: "spotify_history_playback_saver_prod"
+  host: {{envOr "DATABASE_HOST" "localhost" }}
+  port: {{envOr "DATABASE_PORT" "3306" }}
+  user: {{envOr "DATABASE_USER" "prod" }}
+  password: {{envOr "DATABASE_PASSWORD" "prod" }}

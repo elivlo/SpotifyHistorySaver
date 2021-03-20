@@ -1,0 +1,34 @@
+go_version="go1.16.2"
+soda_version="v4.13.1"
+
+echo "Search for tools"
+
+export GO111MODULE=on
+
+# Check gvm
+if ! command -v gvm
+then
+  echo "gvm (go version manager) not found. Exiting..."
+  exit
+fi
+
+# Check go version
+if ! go version | grep $go_version
+then
+  gvm install $go_version -B
+  gvm use $go_version --default
+fi
+
+# Check soda version
+if ! soda -v | grep $soda_version
+then
+  echo "Install gobuffalo/pop/soda $soda_version"
+  go get -u -v github.com/gobuffalo/pop/soda@$soda_version
+fi
+
+# Check revive version
+if ! which revive
+then
+  echo "Install revive"
+  go get -u github.com/mgechev/revive
+fi
