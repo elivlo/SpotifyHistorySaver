@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gobuffalo/envy"
+	pop "github.com/gobuffalo/pop/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
@@ -11,21 +13,34 @@ import (
 	"time"
 )
 
-const tokenFileName = "token.json"
+const (
+	GO_ENV = "GO_ENV"
+	tokenFileName = "token.json"
+)
 
 var logger *log.Entry
+var env string
 
 // SpotifySaver will handle all the saving logic.
 type SpotifySaver struct {
+	dbConnection *pop.Connection
 	token oauth2.Token
 	auth spotify.Authenticator
 	client spotify.Client
 }
 
-// NewSpotifySaver will create a new empty SpotifySaver instance.
-func NewSpotifySaver(log *log.Entry) SpotifySaver {
+// NewSpotifySaver will create a new SpotifySaver instance with database connection.
+// It will throw an error when database connection fails.
+func NewSpotifySaver(log *log.Entry) (SpotifySaver, error) {
 	logger = log
-	return SpotifySaver{}
+	env = envy.Get(GO_ENV, "development")
+	tx, err := pop.Connect(env)
+	if err != nil {
+		return SpotifySaver{}, err
+	}
+	return SpotifySaver{
+		dbConnection: tx,
+	}, nil
 }
 
 // LoadToken will load the token from file "token.json" in exec directory.

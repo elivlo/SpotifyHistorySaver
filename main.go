@@ -63,13 +63,17 @@ func main() {
 	}
 
 	LOG.Info("Start listening to your spotify history...")
-	s := spotifySaver.NewSpotifySaver(LOG)
-	err := s.LoadToken()
+	s, err := spotifySaver.NewSpotifySaver(LOG)
+	if err != nil {
+		LOG.Fatalf("Could not connect to database: %v", err)
+	}
+
+	err = s.LoadToken()
 	if err != nil {
 		LOG.Fatalf("Could not load token: %v", err)
 	}
+	s.Authenticate()
 
-
-	//c.Authenticate(token.AccessToken, token.TokenType, token.RefreshToken, token.Expiry)
+	
 
 }
