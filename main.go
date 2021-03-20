@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	nested "github.com/antonfisher/nested-logrus-formatter"
-	"github.com/elivlo/SpotifyHistoryPlaybackSaver/Login"
-	"github.com/elivlo/SpotifyHistoryPlaybackSaver/SpotifySaver"
+	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
+	"github.com/elivlo/SpotifyHistoryPlaybackSaver/spotifySaver"
 	"github.com/gobuffalo/envy"
 	log "github.com/sirupsen/logrus"
 )
@@ -46,16 +46,16 @@ func init() {
 }
 
 func main() {
-	login := flag.Bool("login", false, "login: will get you an OAuth2 token for further usage")
+	loginFlag := flag.Bool("login", false, "login: will get you an OAuth2 token for further usage")
 
-	if *login {
+	if *loginFlag {
 		LOG.Info("Start login to your account...")
-		token, err := Login.Login(ClientId, ClientSecret, "http://localhost:8080/callback")
+		token, err := login.Login(ClientId, ClientSecret, "http://localhost:8080/callback")
 		if err != nil {
 			LOG.Fatalf("Could not get token: %v", err)
 		}
 
-		err = Login.SaveToken(token)
+		err = login.SaveToken(token)
 		if err != nil {
 			LOG.Fatalf("Could not save token to file: %v", err)
 		}
@@ -63,7 +63,7 @@ func main() {
 	}
 
 	LOG.Info("Start listening to your spotify history...")
-	s := SpotifySaver.NewSpotifySaver(LOG)
+	s := spotifySaver.NewSpotifySaver(LOG)
 	err := s.LoadToken()
 	if err != nil {
 		LOG.Fatalf("Could not load token: %v", err)

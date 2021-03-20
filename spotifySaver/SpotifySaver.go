@@ -1,4 +1,4 @@
-package SpotifySaver
+package spotifySaver
 
 import (
 	"encoding/json"
@@ -18,6 +18,7 @@ var logger *log.Entry
 // SpotifySaver will handle all the saving logic.
 type SpotifySaver struct {
 	token oauth2.Token
+	auth spotify.Authenticator
 	client spotify.Client
 }
 
@@ -45,5 +46,15 @@ func (s SpotifySaver) LoadToken() error {
 	if s.token.Expiry.Unix() <= time.Now().Unix() {
 		return errors.New(fmt.Sprintf("token expired at %v", s.token.Expiry))
 	}
+	return nil
+}
+
+// Authenticate will create a new client from token.
+func (s SpotifySaver) Authenticate() {
+	s.client = s.auth.NewClient(&s.token)
+}
+
+// StartLastSongsWorker
+func (s SpotifySaver) StartLastSongsWorker() error {
 	return nil
 }
