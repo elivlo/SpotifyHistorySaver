@@ -20,12 +20,14 @@ import (
 	"github.com/zmb3/spotify"
 )
 
-const tokenFileName = "token.json"
+const (
+	tokenFileName = "token.json"
+)
 
 var (
 	logger *log.Entry
 	redirectURI string
-	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadRecentlyPlayed)
+	auth  = spotify.Authenticator{}
 	ch    = make(chan *spotify.Client)
 	state = createCodeVerifier(20)
 	codeVerifier = createCodeVerifier(96)
@@ -36,6 +38,9 @@ var (
 func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 	redirectURI = callbackURL
 	initLogger()
+
+	// creates new Authenticator
+	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadRecentlyPlayed)
 
 	// set Spotify App Client Credentials
 	auth.SetAuthInfo(clientID, clientSecret)
@@ -54,7 +59,7 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 	)
 	ur, _ := url.PathUnescape(u)
-	logger.Info("Please log in to Spotify by visiting the following page in your browser:", ur)
+	logger.Info("Please log in to Spotify by visiting the following page in your browser: ", ur)
 
 	// wait for auth to complete
 	client := <-ch
@@ -64,7 +69,7 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Info("You are logged in as:", user.ID)
+	logger.Info("You are logged in as: ", user.ID)
 
 	return client.Token()
 }
@@ -90,7 +95,7 @@ func SaveToken(token *oauth2.Token) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("Wrote access token to %s/%s", dir, tokenFileName)
+	logger.Infof("Wrote access token to %s/%s\n", dir, tokenFileName)
 	return nil
 }
 

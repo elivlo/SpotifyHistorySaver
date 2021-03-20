@@ -47,6 +47,7 @@ func init() {
 
 func main() {
 	loginFlag := flag.Bool("login", false, "login: will get you an OAuth2 token for further usage")
+	flag.Parse()
 
 	if *loginFlag {
 		LOG.Info("Start login to your account...")
@@ -74,6 +75,6 @@ func main() {
 	}
 	s.Authenticate()
 
-	
+
 
 }
