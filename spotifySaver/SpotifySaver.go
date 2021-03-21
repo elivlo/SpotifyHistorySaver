@@ -11,6 +11,7 @@ import (
 	"golang.org/x/oauth2"
 	"io/ioutil"
 	"sync"
+	"time"
 )
 
 const (
@@ -69,16 +70,44 @@ func (s *SpotifySaver) Authenticate(callbackURI, clientID, clientSecret string) 
 	s.client = s.auth.NewClient(&s.token)
 }
 
-// StartLastSongsWorker
-func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup) {
-	songs, err := s.client.PlayerRecentlyPlayedOpt(&spotify.RecentlyPlayedOptions{
-		Limit: 1,
-	})
-	if err != nil {
-		logger.Fatal(err)
+// StartLastSongsWorker is a worker that will send history requests every 45 minutes.
+// It is not async. It accepts a wait group and will send Done when stopped. It may be stopped with stop chan value.
+func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) {
+	first := true
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <- ticker.C:
+			logger.Info("Fetch newly listened songs")
+			last, err := getLastHistoryEntry(s.dbConnection)
+			if err != nil {
+				logger.Warn("Could not get last played song: ", err)
+				last.PlayedAt = time.Unix(0, 0)
+			}
+
+			songs, err := s.client.PlayerRecentlyPlayedOpt(&spotify.RecentlyPlayedOptions{
+				Limit:        50,
+				AfterEpochMs: last.PlayedAt.Unix()*1000,
+			})
+			if err != nil {
+				logger.Error("Could not get recently played songs: ", err)
+			}
+
+			fetched := CreateFetchedSongs(s.dbConnection, songs)
+			err = fetched.TransformAndInsertIntoDatabase()
+			if err != nil {
+				logger.Error("Could not save recently played songs: ", err)
+			}
+			logger.Info("Finished fetching newly listened songs")
+			if first {
+				first = false
+				ticker.Reset(time.Minute * 45)
+			}
+		case <- stop:
+			logger.Info("Shutting down StartLastSongsWorker")
+			ticker.Stop()
+			wg.Done()
+			return
+		}
 	}
-	if len(songs) > 0 {
-		fmt.Println(songs[0])
-	}
-	wg.Done()
 }

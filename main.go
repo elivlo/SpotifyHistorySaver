@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/spotifySaver"
 	"github.com/gobuffalo/envy"
 	log "github.com/sirupsen/logrus"
+	"os"
+	"os/signal"
 	"sync"
 )
 
@@ -81,9 +82,18 @@ func main() {
 	}
 	s.Authenticate(CallbackURI, ClientId, ClientSecret)
 
+	stop := make(chan bool, 1)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func(){
+		for range c {
+			stop <- true
+		}
+	}()
+
 	wg.Add(1)
-	go s.StartLastSongsWorker(&wg)
-	fmt.Println("huhu")
+	go s.StartLastSongsWorker(&wg, stop)
 
 	wg.Wait()
+	LOG.Info("Shutting down...")
 }
