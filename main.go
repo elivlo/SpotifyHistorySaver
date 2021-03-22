@@ -4,8 +4,11 @@ import (
 	"flag"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
+	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/spotifySaver"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/gobuffalo/envy"
+	"github.com/gobuffalo/pop/v5"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
@@ -52,7 +55,20 @@ func init() {
 
 func main() {
 	loginFlag := flag.Bool("login", false, "login: will get you an OAuth2 token for further usage")
+	migrate := flag.Bool("migrate", false, "login: will get you an OAuth2 token for further usage")
 	flag.Parse()
+
+	if *migrate {
+		box, err := pop.NewMigrationBox(packr.New("migrations", "./migrations"), models.DB)
+		if err != nil {
+			LOG.Fatalf("Could not load migrations: %s", err)
+		}
+		err = box.Up()
+		if err != nil {
+			LOG.Fatalf("Could not migrate: %s", err)
+		}
+		return
+	}
 
 	if *loginFlag {
 		LOG.Info("Start login to your account...")
