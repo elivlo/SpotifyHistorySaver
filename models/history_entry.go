@@ -1,9 +1,6 @@
 package models
 
 import (
-	"encoding/json"
-	"github.com/gobuffalo/pop/v5"
-	"github.com/gobuffalo/validate/v3"
 	"sort"
 	"time"
 )
@@ -14,42 +11,12 @@ type HistoryEntry struct {
 	PlayedAt time.Time `json:"played_at" db:"played_at"`
 }
 
-// String is not required by pop and may be deleted
-func (h HistoryEntry) String() string {
-	jh, _ := json.Marshal(h)
-	return string(jh)
-}
-
 // HistoryEntries is not required by pop and may be deleted
 type HistoryEntries []HistoryEntry
 
-// String is not required by pop and may be deleted
-func (h HistoryEntries) String() string {
-	jh, _ := json.Marshal(h)
-	return string(jh)
-}
-
-// String is not required by pop and may be deleted
+// SortByDate will sort an array of HistoryEntries by date ascending
 func (h HistoryEntries) SortByDate() {
 	sort.Slice(h, func(i, j int) bool {
 		return h[i].PlayedAt.Before(h[j].PlayedAt)
 	})
-}
-
-// Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
-func (h *HistoryEntry) Validate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
-}
-
-// ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
-func (h *HistoryEntry) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
-}
-
-// ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
-func (h *HistoryEntry) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
 }

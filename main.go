@@ -32,7 +32,7 @@ var (
 )
 
 // init logging
-func init() {
+func initLogger() {
 	logger := log.New()
 	logger.SetLevel(log.InfoLevel)
 	logger.SetFormatter(&nested.Formatter{
@@ -44,7 +44,7 @@ func init() {
 }
 
 // load env variables
-func init() {
+func initEnvVariables() {
 	var err error
 	ClientId, err = envy.MustGet(ENV_CLIENT_ID)
 	if err != nil {
@@ -57,7 +57,7 @@ func init() {
 	ENV = envy.Get(GO_ENV, "development")
 }
 
-func main() {
+func StartApp() {
 	loginFlag := flag.Bool("login", false, "login: will get you an OAuth2 token for further usage")
 	migrate := flag.Bool("migrate", false, "login: will get you an OAuth2 token for further usage")
 	createDb := flag.Bool("create_db", false, "login: will create the database")
@@ -125,4 +125,13 @@ func main() {
 
 	wg.Wait()
 	LOG.Info("Shutting down...")
+}
+
+func init() {
+	initLogger()
+	initEnvVariables()
+}
+
+func main() {
+	StartApp()
 }

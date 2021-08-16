@@ -15,7 +15,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.8.1
 	github.com/gobuffalo/plush/v4 v4.1.6 // indirect
 	github.com/gobuffalo/pop/v5 v5.3.4
-	github.com/gobuffalo/validate/v3 v3.3.0
+	github.com/gobuffalo/validate/v3 v3.3.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/pgx/v4 v4.13.0 // indirect
 	github.com/jmoiron/sqlx v1.3.4 // indirect
@@ -25,6 +25,7 @@ require (
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
+	github.com/stretchr/testify v1.7.0
 	github.com/zmb3/spotify v1.3.0
 	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
