@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	ENV_CLIENT_ID = "CLIENT_ID"
+	ENV_CLIENT_ID     = "CLIENT_ID"
 	ENV_CLIENT_SECRET = "CLIENT_SECRET"
-	GO_ENV = "GO_ENV"
+	GO_ENV            = "GO_ENV"
 
 	CallbackURI = "http://localhost:8080/callback"
 )
@@ -36,8 +36,8 @@ func initLogger() {
 	logger := log.New()
 	logger.SetLevel(log.InfoLevel)
 	logger.SetFormatter(&nested.Formatter{
-		FieldsOrder:   []string{"component", "category"},
-		HideKeys:      true,
+		FieldsOrder: []string{"component", "category"},
+		HideKeys:    true,
 	})
 	LOG = logger.WithField("component", "SpotifyPlaybackSaver")
 	LOG.Info("Setup SpotifyPlaybackSaver...")
@@ -114,7 +114,7 @@ func StartApp() {
 	stop := make(chan bool, 1)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	go func(){
+	go func() {
 		for range c {
 			stop <- true
 		}

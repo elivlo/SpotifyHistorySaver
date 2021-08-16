@@ -24,9 +24,9 @@ var ENV string
 // SpotifySaver will handle all the saving logic.
 type SpotifySaver struct {
 	dbConnection *pop.Connection
-	token oauth2.Token
-	auth spotify.Authenticator
-	client spotify.Client
+	token        oauth2.Token
+	auth         spotify.Authenticator
+	client       spotify.Client
 }
 
 // NewSpotifySaver will create a new SpotifySaver instance with database connection.
@@ -76,7 +76,7 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 	ticker := time.NewTicker(time.Second * 5)
 	for {
 		select {
-		case <- ticker.C:
+		case <-ticker.C:
 			LOG.Info("Fetch newly listened songs")
 			last, err := getLastHistoryEntry(s.dbConnection)
 			if err != nil {
@@ -111,7 +111,7 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 			if err != nil {
 				LOG.Error("Could not save current client token ", err)
 			}
-		case <- stop:
+		case <-stop:
 			LOG.Info("Shutting down StartLastSongsWorker")
 			ticker.Stop()
 			wg.Done()

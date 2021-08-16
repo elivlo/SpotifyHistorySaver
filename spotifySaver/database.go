@@ -12,17 +12,16 @@ type FetchedSongs struct {
 	db      *pop.Connection
 	fetched []spotify.RecentlyPlayedItem
 
-	history models.HistoryEntries
-	tracks models.Tracks
-	artists models.Artists
+	history     models.HistoryEntries
+	tracks      models.Tracks
+	artists     models.Artists
 	connections models.ArtistsTracks
 }
-
 
 // CreateFetchedSongs will create FetchedSongs struct.
 func CreateFetchedSongs(d *pop.Connection, songs []spotify.RecentlyPlayedItem) FetchedSongs {
 	fetchedSongs := FetchedSongs{
-		db: d,
+		db:      d,
 		fetched: songs,
 	}
 	return fetchedSongs
@@ -121,14 +120,14 @@ func (s *FetchedSongs) artistAlreadyInserted(id string) (bool, error) {
 	return false, err
 }
 
-func convertToHistoryEntry (song spotify.RecentlyPlayedItem) models.HistoryEntry {
+func convertToHistoryEntry(song spotify.RecentlyPlayedItem) models.HistoryEntry {
 	return models.HistoryEntry{
 		TrackId:  song.Track.ID.String(),
 		PlayedAt: song.PlayedAt,
 	}
 }
 
-func convertToTrackEntry (song spotify.RecentlyPlayedItem) models.Track {
+func convertToTrackEntry(song spotify.RecentlyPlayedItem) models.Track {
 	track := song.Track
 	return models.Track{
 		ID:          track.ID.String(),
@@ -140,15 +139,15 @@ func convertToTrackEntry (song spotify.RecentlyPlayedItem) models.Track {
 }
 
 // convertToArtistEntries created artists and the connection to a track.
-func convertToArtistEntries (song spotify.RecentlyPlayedItem) (models.Artists, models.ArtistsTracks) {
+func convertToArtistEntries(song spotify.RecentlyPlayedItem) (models.Artists, models.ArtistsTracks) {
 	songID := song.Track.ID.String()
 	var artists models.Artists
 	var connection models.ArtistsTracks
 	as := song.Track.Artists
 	for _, a := range as {
 		artists = append(artists, models.Artist{
-			ID:       a.ID.String(),
-			Name:     a.Name,
+			ID:   a.ID.String(),
+			Name: a.Name,
 		})
 		connection = append(connection, models.ArtistsTrack{
 			ArtistID: a.ID.String(),
