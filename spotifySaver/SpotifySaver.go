@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
 	"github.com/gobuffalo/pop/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
@@ -72,7 +73,7 @@ func (s *SpotifySaver) Authenticate(callbackURI, clientID, clientSecret string) 
 // It is not async. It accepts a wait group and will send Done when stopped. It may be stopped with stop chan value.
 func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) {
 	first := true
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second * 5)
 	for {
 		select {
 		case <- ticker.C:
@@ -100,6 +101,15 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 			if first {
 				first = false
 				ticker.Reset(time.Minute * 45)
+			}
+
+			token, err := s.client.Token()
+			if err != nil {
+				LOG.Error("Could not get current client token: ", err)
+			}
+			err = login.SaveToken(token)
+			if err != nil {
+				LOG.Error("Could not save current client token ", err)
 			}
 		case <- stop:
 			LOG.Info("Shutting down StartLastSongsWorker")

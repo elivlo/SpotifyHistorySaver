@@ -1,6 +1,5 @@
 package login
 
-
 import (
 	"crypto/sha256"
 	"encoding/base64"
@@ -25,12 +24,12 @@ const (
 )
 
 var (
-	logger *log.Entry
-	redirectURI string
-	auth  = spotify.Authenticator{}
-	ch    = make(chan *spotify.Client)
-	state = createCodeVerifier(20)
-	codeVerifier = createCodeVerifier(96)
+	logger        *log.Entry
+	redirectURI   string
+	auth          = spotify.Authenticator{}
+	ch            = make(chan *spotify.Client)
+	state         = createCodeVerifier(20)
+	codeVerifier  = createCodeVerifier(96)
 	codeChallenge = createVerifierChallenge(codeVerifier)
 )
 
@@ -76,6 +75,7 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 
 // SaveToken will save access and refresh token to token.json file in exec directory.
 func SaveToken(token *oauth2.Token) error {
+	initLogger()
 	fileString, err := json.Marshal(token)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func SaveToken(token *oauth2.Token) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("Wrote access token to %s/%s\n", dir, tokenFileName)
+	logger.Infof("Wrote access token to %s/%s", dir, tokenFileName)
 	return nil
 }
 
@@ -104,10 +104,10 @@ func initLogger() {
 	l := log.New()
 	l.SetLevel(log.InfoLevel)
 	l.SetFormatter(&nested.Formatter{
-		FieldsOrder:   []string{"component", "category"},
-		HideKeys:      true,
+		FieldsOrder: []string{"component", "category"},
+		HideKeys:    true,
 	})
-	logger = l.WithField("component", "ACCOUNT LOGIN")
+	logger = l.WithField("component", "LOGIN")
 }
 
 // authHandler will handle the incoming token from Spotify.
