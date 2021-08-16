@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
+	"sort"
 	"time"
 )
 // HistoryEntry is used by pop to map your .model.Name.Proper.Pluralize.Underscore database table to your go code.
@@ -26,6 +27,13 @@ type HistoryEntries []HistoryEntry
 func (h HistoryEntries) String() string {
 	jh, _ := json.Marshal(h)
 	return string(jh)
+}
+
+// String is not required by pop and may be deleted
+func (h HistoryEntries) SortByDate() {
+	sort.Slice(h, func(i, j int) bool {
+		return h[i].PlayedAt.Before(h[j].PlayedAt)
+	})
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.

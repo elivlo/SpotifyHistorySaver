@@ -80,6 +80,7 @@ func (s *FetchedSongs) convertRecentlyToDBTables() {
 			}
 		}
 	}
+	s.history.SortByDate()
 }
 
 // trackAlreadyInserted check if database contains track.
