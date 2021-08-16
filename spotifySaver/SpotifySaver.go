@@ -85,7 +85,7 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 
 			songs, err := s.client.PlayerRecentlyPlayedOpt(&spotify.RecentlyPlayedOptions{
 				Limit:        50,
-				AfterEpochMs: last.PlayedAt.Unix()*1000,
+				AfterEpochMs: last.PlayedAt.Unix()*1000 + 1,
 			})
 			if err != nil {
 				LOG.Error("Could not get recently played songs: ", err)
