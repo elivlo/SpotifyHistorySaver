@@ -47,7 +47,7 @@ func (s *FetchedSongs) TransformAndInsertIntoDatabase() error {
 	if err != nil {
 		return errors.Errorf("Could not insert artist track connections: %v", err)
 	}
-	logger.Debugf("Added %d new tracks, %d new artists and %d history tracks", len(s.tracks), len(s.artists), len(s.history))
+	LOG.Debugf("Added %d new tracks, %d new artists and %d history tracks", len(s.tracks), len(s.artists), len(s.history))
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (s *FetchedSongs) convertRecentlyToDBTables() {
 		track := convertToTrackEntry(song)
 		trackInserted, err := s.trackAlreadyInserted(track.ID)
 		if err != nil {
-			logger.Errorf("Song %v could not be added: %v\n", song, err)
+			LOG.Errorf("Song %v could not be added: %v\n", song, err)
 			continue
 		}
 		if !trackInserted {
@@ -71,7 +71,7 @@ func (s *FetchedSongs) convertRecentlyToDBTables() {
 			for _, art := range arts {
 				artInserted, err := s.artistAlreadyInserted(art.ID)
 				if err != nil {
-					logger.Errorf("Artist %v could not be added: %v\n", art, err)
+					LOG.Errorf("Artist %v could not be added: %v\n", art, err)
 					continue
 				}
 				if !artInserted {

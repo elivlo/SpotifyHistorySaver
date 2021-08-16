@@ -32,3 +32,6 @@ then
   echo "Install revive"
   go get -u github.com/mgechev/revive
 fi
+
+go mod tidy
+go mod vendor

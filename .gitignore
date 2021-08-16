@@ -134,3 +134,4 @@ fabric.properties
 .env
 token.json
 SpotifyHistoryPlaybackSaver
+vendor/*

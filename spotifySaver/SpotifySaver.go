@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gobuffalo/envy"
-	pop "github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/pop/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
@@ -15,12 +14,11 @@ import (
 )
 
 const (
-	GO_ENV = "GO_ENV"
 	tokenFileName = "token.json"
 )
 
-var logger *log.Entry
-var env string
+var LOG *log.Entry
+var ENV string
 
 // SpotifySaver will handle all the saving logic.
 type SpotifySaver struct {
@@ -32,10 +30,10 @@ type SpotifySaver struct {
 
 // NewSpotifySaver will create a new SpotifySaver instance with database connection.
 // It will throw an error when database connection fails.
-func NewSpotifySaver(log *log.Entry) (SpotifySaver, error) {
-	logger = log
-	env = envy.Get(GO_ENV, "development")
-	tx, err := pop.Connect(env)
+func NewSpotifySaver(log *log.Entry, env string) (SpotifySaver, error) {
+	LOG = log
+	ENV = env
+	tx, err := pop.Connect(ENV)
 	if err != nil {
 		return SpotifySaver{}, err
 	}
@@ -78,10 +76,10 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 	for {
 		select {
 		case <- ticker.C:
-			logger.Info("Fetch newly listened songs")
+			LOG.Info("Fetch newly listened songs")
 			last, err := getLastHistoryEntry(s.dbConnection)
 			if err != nil {
-				logger.Warn("Could not get last played song: ", err)
+				LOG.Warn("Could not get last played song: ", err)
 				last.PlayedAt = time.Unix(0, 0)
 			}
 
@@ -90,21 +88,21 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 				AfterEpochMs: last.PlayedAt.Unix()*1000,
 			})
 			if err != nil {
-				logger.Error("Could not get recently played songs: ", err)
+				LOG.Error("Could not get recently played songs: ", err)
 			}
 
 			fetched := CreateFetchedSongs(s.dbConnection, songs)
 			err = fetched.TransformAndInsertIntoDatabase()
 			if err != nil {
-				logger.Error("Could not save recently played songs: ", err)
+				LOG.Error("Could not save recently played songs: ", err)
 			}
-			logger.Info("Finished fetching newly listened songs")
+			LOG.Info("Finished fetching newly listened songs")
 			if first {
 				first = false
 				ticker.Reset(time.Minute * 45)
 			}
 		case <- stop:
-			logger.Info("Shutting down StartLastSongsWorker")
+			LOG.Info("Shutting down StartLastSongsWorker")
 			ticker.Stop()
 			wg.Done()
 			return
