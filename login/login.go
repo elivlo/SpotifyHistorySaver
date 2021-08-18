@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -16,7 +17,8 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
+	spotifyauth "github.com/zmb3/spotify/v2/auth"
 )
 
 const (
@@ -26,7 +28,7 @@ const (
 var (
 	logger        *log.Entry
 	redirectURI   string
-	auth          = spotify.Authenticator{}
+	auth          *spotifyauth.Authenticator
 	ch            = make(chan *spotify.Client)
 	state         = createCodeVerifier(20)
 	codeVerifier  = createCodeVerifier(96)
@@ -39,10 +41,10 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 	initLogger()
 
 	// creates new Authenticator
-	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadRecentlyPlayed)
-
-	// set Spotify App Client Credentials
-	auth.SetAuthInfo(clientID, clientSecret)
+	auth = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI),
+		spotifyauth.WithScopes(spotifyauth.ScopeUserReadRecentlyPlayed),
+		spotifyauth.WithClientID(clientID),
+		spotifyauth.WithClientSecret(clientSecret))
 
 	// start HTTP callback server
 	http.HandleFunc("/callback", authHandler)
@@ -53,7 +55,7 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 		}
 	}()
 
-	u := auth.AuthURLWithOpts(state,
+	u := auth.AuthURL(state,
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 	)
@@ -64,7 +66,7 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 	client := <-ch
 
 	// use the client to make calls that require authorization
-	user, err := client.CurrentUser()
+	user, err := client.CurrentUser(context.Background())
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -112,7 +114,7 @@ func initLogger() {
 
 // authHandler will handle the incoming token from Spotify.
 func authHandler(w http.ResponseWriter, r *http.Request) {
-	tok, err := auth.TokenWithOpts(state, r,
+	token, err := auth.Token(r.Context(), state, r,
 		oauth2.SetAuthURLParam("code_verifier", codeVerifier))
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
@@ -123,12 +125,12 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Fatalf("State mismatch: %s != %s\n", st, state)
 	}
 	// use the token to get an authenticated client
-	client := auth.NewClient(tok)
+	client := spotify.New(auth.Client(r.Context(), token))
 	_, err = fmt.Fprintf(w, "Login Completed!")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	ch <- &client
+	ch <- client
 }
 
 // createCodeVerifier will create a random base64 encoded verifier.

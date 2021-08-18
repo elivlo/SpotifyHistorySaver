@@ -1,13 +1,15 @@
 package spotifySaver
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
 	"github.com/gobuffalo/pop/v5"
 	log "github.com/sirupsen/logrus"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
+	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2"
 	"io/ioutil"
 	"sync"
@@ -24,9 +26,9 @@ var ENV string
 // SpotifySaver will handle all the saving logic.
 type SpotifySaver struct {
 	dbConnection *pop.Connection
-	token        oauth2.Token
-	auth         spotify.Authenticator
-	client       spotify.Client
+	token        *oauth2.Token
+	auth         *spotifyauth.Authenticator
+	client       *spotify.Client
 }
 
 // NewSpotifySaver will create a new SpotifySaver instance with database connection.
@@ -64,9 +66,11 @@ func (s *SpotifySaver) LoadToken() error {
 
 // Authenticate will create a new client from token.
 func (s *SpotifySaver) Authenticate(callbackURI, clientID, clientSecret string) {
-	s.auth = spotify.NewAuthenticator(callbackURI, spotify.ScopeUserReadRecentlyPlayed)
-	s.auth.SetAuthInfo(clientID, clientSecret)
-	s.client = s.auth.NewClient(&s.token)
+	s.auth = spotifyauth.New(spotifyauth.WithRedirectURL(callbackURI),
+		spotifyauth.WithScopes(spotifyauth.ScopeUserReadRecentlyPlayed),
+		spotifyauth.WithClientID(clientID),
+		spotifyauth.WithClientSecret(clientSecret))
+	s.client = spotify.New(s.auth.Client(context.Background(), s.token))
 }
 
 // StartLastSongsWorker is a worker that will send history requests every 45 minutes.
@@ -84,7 +88,7 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 				last.PlayedAt = time.Unix(0, 0)
 			}
 
-			songs, err := s.client.PlayerRecentlyPlayedOpt(&spotify.RecentlyPlayedOptions{
+			songs, err := s.client.PlayerRecentlyPlayedOpt(context.Background(), &spotify.RecentlyPlayedOptions{
 				Limit:        50,
 				AfterEpochMs: last.PlayedAt.Unix()*1000 + 1,
 			})

@@ -4,7 +4,7 @@ import (
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/pkg/errors"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 	"strings"
 )
 
