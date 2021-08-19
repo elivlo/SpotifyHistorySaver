@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -26,41 +26,53 @@ const (
 )
 
 var (
-	logger        *log.Entry
-	redirectURI   string
-	auth          *spotifyauth.Authenticator
 	ch            = make(chan *spotify.Client)
 	state         = createCodeVerifier(20)
 	codeVerifier  = createCodeVerifier(96)
 	codeChallenge = createVerifierChallenge(codeVerifier)
 )
 
-// Login wil open a http server to log in to your account to get a newly created OAuth2 token.
-func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
-	redirectURI = callbackURL
-	initLogger()
+type Auth interface {
+	Login(clientID, clientSecret string) (*oauth2.Token, error)
+	SaveToken(*oauth2.Token) error
+}
 
+type Login struct {
+	logger *logrus.Entry
+	callbackURI string
+	auth *spotifyauth.Authenticator
+}
+
+func NewLogin(callbackURL string) Login {
+	return Login{
+		logger: initLogger(logrus.New()),
+		callbackURI: callbackURL,
+	}
+}
+
+// Login wil open a http server to log in to your account to get a newly created OAuth2 token.
+func (l Login) Login(clientID, clientSecret string) (*oauth2.Token, error) {
 	// creates new Authenticator
-	auth = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI),
+	l.auth = spotifyauth.New(spotifyauth.WithRedirectURL(l.callbackURI),
 		spotifyauth.WithScopes(spotifyauth.ScopeUserReadRecentlyPlayed),
 		spotifyauth.WithClientID(clientID),
 		spotifyauth.WithClientSecret(clientSecret))
 
 	// start HTTP callback server
-	http.HandleFunc("/callback", authHandler)
+	http.HandleFunc("/callback", l.authHandler)
 	go func() {
 		err := http.ListenAndServe(":8080", nil)
 		if err != nil {
-			logger.Fatal(err)
+			l.logger.Fatal(err)
 		}
 	}()
 
-	u := auth.AuthURL(state,
+	u := l.auth.AuthURL(state,
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 	)
 	ur, _ := url.PathUnescape(u)
-	logger.Info("Please log in to Spotify by visiting the following page in your browser: ", ur)
+	l.logger.Info("Please log in to Spotify by visiting the following page in your browser: ", ur)
 
 	// wait for auth to complete
 	client := <-ch
@@ -68,16 +80,15 @@ func Login(clientID, clientSecret, callbackURL string) (*oauth2.Token, error) {
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser(context.Background())
 	if err != nil {
-		logger.Fatal(err)
+		l.logger.Fatal(err)
 	}
-	logger.Info("You are logged in as: ", user.ID)
+	l.logger.Info("You are logged in as: ", user.ID)
 
 	return client.Token()
 }
 
 // SaveToken will save access and refresh token to token.json file in exec directory.
-func SaveToken(token *oauth2.Token) error {
-	initLogger()
+func (l Login) SaveToken(token *oauth2.Token) error {
 	fileString, err := json.Marshal(token)
 	if err != nil {
 		return err
@@ -97,38 +108,37 @@ func SaveToken(token *oauth2.Token) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("Wrote access token to %s/%s", dir, tokenFileName)
+	l.logger.Infof("Wrote access token to %s/%s", dir, tokenFileName)
 	return nil
 }
 
 // initLogger inits a logger with "ACCOUNT LOGIN" prefix.
-func initLogger() {
-	l := log.New()
-	l.SetLevel(log.InfoLevel)
-	l.SetFormatter(&nested.Formatter{
+func initLogger(logger *logrus.Logger) *logrus.Entry {
+	logger.SetLevel(logrus.InfoLevel)
+	logger.SetFormatter(&nested.Formatter{
 		FieldsOrder: []string{"component", "category"},
 		HideKeys:    true,
 	})
-	logger = l.WithField("component", "LOGIN")
+	return logger.WithField("component", "LOGIN")
 }
 
 // authHandler will handle the incoming token from Spotify.
-func authHandler(w http.ResponseWriter, r *http.Request) {
-	token, err := auth.Token(r.Context(), state, r,
+func (l Login) authHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := l.auth.Token(r.Context(), state, r,
 		oauth2.SetAuthURLParam("code_verifier", codeVerifier))
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
-		logger.Fatal(err)
+		l.logger.Fatal(err)
 	}
 	if st := r.FormValue("state"); st != state {
 		http.NotFound(w, r)
-		logger.Fatalf("State mismatch: %s != %s\n", st, state)
+		l.logger.Fatalf("State mismatch: %s != %s\n", st, state)
 	}
 	// use the token to get an authenticated client
-	client := spotify.New(auth.Client(r.Context(), token))
+	client := spotify.New(l.auth.Client(r.Context(), token))
 	_, err = fmt.Fprintf(w, "Login Completed!")
 	if err != nil {
-		logger.Fatal(err)
+		l.logger.Fatal(err)
 	}
 	ch <- client
 }

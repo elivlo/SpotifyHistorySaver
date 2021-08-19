@@ -23,6 +23,12 @@ const (
 var LOG *log.Entry
 var ENV string
 
+type InterfaceSpotifySaver interface {
+	LoadToken() error
+	Authenticate(callbackURI, clientID, clientSecret string)
+	StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool)
+}
+
 // SpotifySaver will handle all the saving logic.
 type SpotifySaver struct {
 	dbConnection *pop.Connection
@@ -38,7 +44,7 @@ func NewSpotifySaver(log *log.Entry, env string) (SpotifySaver, error) {
 	ENV = env
 	tx, err := pop.Connect(ENV)
 	if err != nil {
-		return SpotifySaver{}, err
+		return SpotifySaver{}, errors.New(fmt.Sprintf("Could not connect to database: %v", err))
 	}
 	return SpotifySaver{
 		dbConnection: tx,
@@ -111,7 +117,7 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 			if err != nil {
 				LOG.Error("Could not get current client token: ", err)
 			}
-			err = login.SaveToken(token)
+			err = login.NewLogin("").SaveToken(token)
 			if err != nil {
 				LOG.Error("Could not save current client token ", err)
 			}
