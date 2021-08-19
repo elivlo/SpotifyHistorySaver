@@ -117,7 +117,7 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 			if err != nil {
 				LOG.Error("Could not get current client token: ", err)
 			}
-			err = login.NewLogin("").SaveToken(token)
+			err = login.NewLogin("").SaveToken(login.TokenFileName, token)
 			if err != nil {
 				LOG.Error("Could not save current client token ", err)
 			}

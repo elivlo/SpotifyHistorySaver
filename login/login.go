@@ -22,32 +22,35 @@ import (
 )
 
 const (
-	tokenFileName = "token.json"
-)
-
-var (
-	ch            = make(chan *spotify.Client)
-	state         = createCodeVerifier(20)
-	codeVerifier  = createCodeVerifier(96)
-	codeChallenge = createVerifierChallenge(codeVerifier)
+	TokenFileName = "token.json"
 )
 
 type Auth interface {
 	Login(clientID, clientSecret string) (*oauth2.Token, error)
-	SaveToken(*oauth2.Token) error
+	SaveToken(string, *oauth2.Token) error
 }
 
 type Login struct {
-	logger *logrus.Entry
-	callbackURI string
-	auth *spotifyauth.Authenticator
+	logger        *logrus.Entry
+	callbackURI   string
+	ch            chan *spotify.Client
+	auth          *spotifyauth.Authenticator
+	state         string
+	codeVerifier  string
+	codeChallenge string
 }
 
 func NewLogin(callbackURL string) Login {
-	return Login{
-		logger: initLogger(logrus.New()),
-		callbackURI: callbackURL,
+	login := Login{
+		logger:       initLogger(logrus.New()),
+		callbackURI:  callbackURL,
+		state:        createCodeVerifier(20),
+		codeVerifier: createCodeVerifier(96),
+		ch:           make(chan *spotify.Client),
 	}
+	login.codeChallenge = createVerifierChallenge(login.codeVerifier)
+
+	return login
 }
 
 // Login wil open a http server to log in to your account to get a newly created OAuth2 token.
@@ -67,15 +70,15 @@ func (l Login) Login(clientID, clientSecret string) (*oauth2.Token, error) {
 		}
 	}()
 
-	u := l.auth.AuthURL(state,
+	u := l.auth.AuthURL(l.state,
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
-		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
+		oauth2.SetAuthURLParam("code_challenge", l.codeChallenge),
 	)
 	ur, _ := url.PathUnescape(u)
 	l.logger.Info("Please log in to Spotify by visiting the following page in your browser: ", ur)
 
 	// wait for auth to complete
-	client := <-ch
+	client := <-l.ch
 
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser(context.Background())
@@ -88,18 +91,18 @@ func (l Login) Login(clientID, clientSecret string) (*oauth2.Token, error) {
 }
 
 // SaveToken will save access and refresh token to token.json file in exec directory.
-func (l Login) SaveToken(token *oauth2.Token) error {
+func (l Login) SaveToken(file string, token *oauth2.Token) error {
 	fileString, err := json.Marshal(token)
 	if err != nil {
 		return err
 	}
 
-	file, err := os.OpenFile(tokenFileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0700)
+	f, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0700)
 	if err != nil {
 		return err
 	}
 
-	_, err = file.Write(fileString)
+	_, err = f.Write(fileString)
 	if err != nil {
 		return err
 	}
@@ -108,8 +111,29 @@ func (l Login) SaveToken(token *oauth2.Token) error {
 	if err != nil {
 		return err
 	}
-	l.logger.Infof("Wrote access token to %s/%s", dir, tokenFileName)
+	l.logger.Infof("Wrote access token to %s/%s", dir, file)
 	return nil
+}
+
+// authHandler will handle the incoming token from Spotify.
+func (l Login) authHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := l.auth.Token(r.Context(), l.state, r,
+		oauth2.SetAuthURLParam("code_verifier", l.codeVerifier))
+	if err != nil {
+		http.Error(w, "Couldn't get token", http.StatusForbidden)
+		l.logger.Fatal(err)
+	}
+	if st := r.FormValue("state"); st != l.state {
+		http.NotFound(w, r)
+		l.logger.Fatalf("State mismatch: %s != %s\n", st, l.state)
+	}
+	// use the token to get an authenticated client
+	client := spotify.New(l.auth.Client(r.Context(), token))
+	_, err = fmt.Fprintf(w, "Login Completed!")
+	if err != nil {
+		l.logger.Fatal(err)
+	}
+	l.ch <- client
 }
 
 // initLogger inits a logger with "ACCOUNT LOGIN" prefix.
@@ -120,27 +144,6 @@ func initLogger(logger *logrus.Logger) *logrus.Entry {
 		HideKeys:    true,
 	})
 	return logger.WithField("component", "LOGIN")
-}
-
-// authHandler will handle the incoming token from Spotify.
-func (l Login) authHandler(w http.ResponseWriter, r *http.Request) {
-	token, err := l.auth.Token(r.Context(), state, r,
-		oauth2.SetAuthURLParam("code_verifier", codeVerifier))
-	if err != nil {
-		http.Error(w, "Couldn't get token", http.StatusForbidden)
-		l.logger.Fatal(err)
-	}
-	if st := r.FormValue("state"); st != state {
-		http.NotFound(w, r)
-		l.logger.Fatalf("State mismatch: %s != %s\n", st, state)
-	}
-	// use the token to get an authenticated client
-	client := spotify.New(l.auth.Client(r.Context(), token))
-	_, err = fmt.Fprintf(w, "Login Completed!")
-	if err != nil {
-		l.logger.Fatal(err)
-	}
-	ch <- client
 }
 
 // createCodeVerifier will create a random base64 encoded verifier.

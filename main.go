@@ -89,7 +89,7 @@ func loginAccount(auth login.Auth) error {
 		return errors.New(fmt.Sprintf("Could not get token: %v", err))
 	}
 
-	err = auth.SaveToken(token)
+	err = auth.SaveToken(login.TokenFileName, token)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Could not save token to file: %v", err))
 	}

@@ -2,11 +2,14 @@ package login
 
 import (
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 	"os"
 	"testing"
+	"time"
 )
 
 var hook *logtest.Hook
@@ -15,8 +18,34 @@ func TestMain(m *testing.M) {
 	var logger *logrus.Logger
 	logger, hook = logtest.NewNullLogger()
 	initLogger(logger)
+
 	code := m.Run()
 	os.Exit(code)
+}
+
+func TestNewLogin(t *testing.T) {
+	login := NewLogin("url.123")
+
+	assert.Equal(t, login.callbackURI, "url.123")
+}
+
+func TestLogin_SaveToken(t *testing.T) {
+	login := NewLogin("url.123")
+	tokenName, err := uuid.NewV4()
+	assert.NoError(t, err)
+
+	tim := time.Now()
+
+	err = login.SaveToken(tokenName.String(), &oauth2.Token{
+		AccessToken:  "aaa",
+		TokenType:    "ttt",
+		RefreshToken: "rrr",
+		Expiry:       tim,
+	})
+	assert.NoError(t, err)
+
+	err = os.Remove(tokenName.String())
+	assert.NoError(t, err)
 }
 
 func TestCreateCodeVerifier(t *testing.T) {
