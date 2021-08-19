@@ -19,7 +19,7 @@ https://dbdiagram.io/d/6055e6a2ecb54e10c33c63ac
 
 ![Database](assets/SpotifyHistoryPlaybackSaver.png "Database")
 
-### Many thanks to these libraries that made my live easier:
+### Many thanks to these libraries that made my life easier:
 + https://github.com/zmb3/spotify
 + https://github.com/gobuffalo
 + https://github.com/antonfisher/nested-logrus-formatter
