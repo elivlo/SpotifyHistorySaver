@@ -114,19 +114,23 @@ func TestStartSubCommands(t *testing.T) {
 	err := pop.DropDB(DB)
 	assert.NoError(t, err)
 
-	err = StartSubCommands(nil, nil)
+	err, ready := StartSubCommands(nil, nil)
 	assert.NoError(t, err)
+	assert.True(t, ready)
 
 	*loginFlag = true
-	err = StartSubCommands(nil, mock)
+	err, ready = StartSubCommands(nil, mock)
 	assert.NoError(t, err)
+	assert.False(t, ready)
 
 	*createDb = true
-	err = StartSubCommands(DB, mock)
+	err, ready = StartSubCommands(DB, mock)
 	assert.NoError(t, err)
+	assert.False(t, ready)
 
 	*createDb = false
 	*migrate = true
-	err = StartSubCommands(DB, mock)
+	err, ready = StartSubCommands(DB, mock)
 	assert.NoError(t, err)
+	assert.False(t, ready)
 }

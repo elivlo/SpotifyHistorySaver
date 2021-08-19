@@ -96,22 +96,22 @@ func loginAccount(auth login.Auth) error {
 	return nil
 }
 
-func StartSubCommands(db *pop.Connection, auth login.Auth) error {
+func StartSubCommands(db *pop.Connection, auth login.Auth) (error, bool) {
 	flag.Parse()
 
 	if *createDb {
-		return createDB(db)
+		return createDB(db), false
 	}
 
 	if *migrate {
-		return migrateDB(db)
+		return migrateDB(db), false
 	}
 
 	if *loginFlag {
-		return loginAccount(auth)
+		return loginAccount(auth), false
 	}
 
-	return nil
+	return nil, true
 }
 
 func StartApp(s spotifySaver.InterfaceSpotifySaver) error {
@@ -154,9 +154,13 @@ func init() {
 }
 
 func main() {
-	err := StartSubCommands(models.DB, login.NewLogin(CallbackURI))
+	err, ready := StartSubCommands(models.DB, login.NewLogin(CallbackURI))
 	if err != nil {
 		LOG.Error(err)
+	}
+
+	if !ready {
+		return
 	}
 
 	s, err := spotifySaver.NewSpotifySaver(LOG, ENV)
