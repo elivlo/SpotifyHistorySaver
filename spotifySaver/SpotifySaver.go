@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
+	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
 	"github.com/gobuffalo/pop/v5"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2"
@@ -17,14 +18,11 @@ import (
 )
 
 const (
-	tokenFileName = "token.json"
+	TokenFileName = "token.json"
 )
 
-var LOG *log.Entry
-var ENV string
-
 type InterfaceSpotifySaver interface {
-	LoadToken() error
+	LoadToken(file string) error
 	Authenticate(callbackURI, clientID, clientSecret string)
 	StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool)
 }
@@ -35,26 +33,28 @@ type SpotifySaver struct {
 	token        *oauth2.Token
 	auth         *spotifyauth.Authenticator
 	client       *spotify.Client
+	log *logrus.Entry
+	env string
 }
 
 // NewSpotifySaver will create a new SpotifySaver instance with database connection.
 // It will throw an error when database connection fails.
-func NewSpotifySaver(log *log.Entry, env string) (SpotifySaver, error) {
-	LOG = log
-	ENV = env
-	tx, err := pop.Connect(ENV)
+func NewSpotifySaver(log *logrus.Entry, env string) (*SpotifySaver, error) {
+	tx, err := pop.Connect(env)
 	if err != nil {
-		return SpotifySaver{}, errors.New(fmt.Sprintf("Could not connect to database: %v", err))
+		return nil, errors.New(fmt.Sprintf("Could not connect to database: %v", err))
 	}
-	return SpotifySaver{
+	return &SpotifySaver{
 		dbConnection: tx,
+		log: log,
+		env: env,
 	}, nil
 }
 
 // LoadToken will load the token from file "token.json" in exec directory.
 // It will throw an error when the token is expired.
-func (s *SpotifySaver) LoadToken() error {
-	fileBytes, err := ioutil.ReadFile(tokenFileName)
+func (s *SpotifySaver) LoadToken(file string) error {
+	fileBytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (s *SpotifySaver) LoadToken() error {
 		return err
 	}
 
-	if !s.token.Valid() && s.token.RefreshToken == "" {
+	if !s.token.Valid() || s.token.RefreshToken == "" {
 		return errors.New(fmt.Sprintf("token expired at %v", s.token.Expiry))
 	}
 	return nil
@@ -87,45 +87,67 @@ func (s *SpotifySaver) StartLastSongsWorker(wg *sync.WaitGroup, stop chan bool) 
 	for {
 		select {
 		case <-ticker.C:
-			LOG.Info("Fetch newly listened songs")
-			last, err := getLastHistoryEntry(s.dbConnection)
-			if err != nil {
-				LOG.Warn("Could not get last played song: ", err)
-				last.PlayedAt = time.Unix(0, 0)
-			}
+			s.log.Info("Fetch newly listened songs")
 
-			songs, err := s.client.PlayerRecentlyPlayedOpt(context.Background(), &spotify.RecentlyPlayedOptions{
-				Limit:        50,
-				AfterEpochMs: last.PlayedAt.Unix()*1000 + 1,
-			})
-			if err != nil {
-				LOG.Error("Could not get recently played songs: ", err)
-			}
+			last := s.getLastEntry()
 
-			fetched := CreateFetchedSongs(s.dbConnection, songs)
-			err = fetched.TransformAndInsertIntoDatabase()
-			if err != nil {
-				LOG.Error("Could not save recently played songs: ", err)
-			}
-			LOG.Info("Finished fetching newly listened songs")
+			songs := s.fetchNewSongs(last)
+
+			s.insertNewSongs(songs)
+
+			s.log.Info("Finished fetching newly listened songs")
+
+			s.saveNewToken(login.TokenFileName)
+
 			if first {
 				first = false
 				ticker.Reset(time.Minute * 45)
 			}
-
-			token, err := s.client.Token()
-			if err != nil {
-				LOG.Error("Could not get current client token: ", err)
-			}
-			err = login.NewLogin("").SaveToken(login.TokenFileName, token)
-			if err != nil {
-				LOG.Error("Could not save current client token ", err)
-			}
 		case <-stop:
-			LOG.Info("Shutting down StartLastSongsWorker")
+			s.log.Info("Shutting down StartLastSongsWorker")
 			ticker.Stop()
 			wg.Done()
 			return
 		}
+	}
+}
+
+func (s *SpotifySaver) getLastEntry() models.HistoryEntry {
+	last, err := getLastHistoryEntry(s.dbConnection)
+	if err != nil {
+		s.log.Warnf("Could not get last played song: %v", err)
+		last.PlayedAt = time.Unix(0, 0)
+	}
+	return last
+}
+
+func (s *SpotifySaver) fetchNewSongs(last models.HistoryEntry) []spotify.RecentlyPlayedItem {
+	songs, err := s.client.PlayerRecentlyPlayedOpt(context.Background(), &spotify.RecentlyPlayedOptions{
+		Limit:        50,
+		AfterEpochMs: last.PlayedAt.Unix()*1000 + 1,
+	})
+	if err != nil {
+		s.log.Error("Could not get recently played songs: ", err)
+	}
+
+	return songs
+}
+
+func (s *SpotifySaver) insertNewSongs(songs []spotify.RecentlyPlayedItem) {
+	fetched := NewFetchedSongs(s.dbConnection, songs)
+	err := fetched.TransformAndInsertIntoDatabase(s.log)
+	if err != nil {
+		s.log.Error("Could not save recently played songs: ", err)
+	}
+}
+
+func (s *SpotifySaver) saveNewToken(fileName string) {
+	token, err := s.client.Token()
+	if err != nil {
+		s.log.Error("Could not get current client token: ", err)
+	}
+	err = login.NewLogin("").SaveToken(fileName, token)
+	if err != nil {
+		s.log.Error("Could not save current client token ", err)
 	}
 }

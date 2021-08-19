@@ -12,7 +12,7 @@ type MockedSpotifySaver struct {
 
 // LoadToken will load the token from file "token.json" in exec directory.
 // It will throw an error when the token is expired.
-func (s *MockedSpotifySaver) LoadToken() error {
+func (s *MockedSpotifySaver) LoadToken(_ string) error {
 	if s.LError {
 		return errors.New("load Token error")
 	}

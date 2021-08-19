@@ -118,7 +118,7 @@ func StartApp(s spotifySaver.InterfaceSpotifySaver) error {
 	LOG.Info("Start listening to your spotify history...")
 	var wg sync.WaitGroup
 
-	err := s.LoadToken()
+	err := s.LoadToken(spotifySaver.TokenFileName)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Could not load token: %v", err))
 	}
@@ -163,7 +163,7 @@ func main() {
 	if err != nil {
 		LOG.Fatal(err)
 	}
-	err = StartApp(&s)
+	err = StartApp(s)
 	if err != nil {
 		LOG.Fatal(err)
 	}

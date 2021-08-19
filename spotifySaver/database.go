@@ -4,6 +4,7 @@ import (
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify/v2"
 	"strings"
 )
@@ -18,8 +19,8 @@ type FetchedSongs struct {
 	connections models.ArtistsTracks
 }
 
-// CreateFetchedSongs will create FetchedSongs struct.
-func CreateFetchedSongs(d *pop.Connection, songs []spotify.RecentlyPlayedItem) FetchedSongs {
+// NewFetchedSongs will create FetchedSongs struct.
+func NewFetchedSongs(d *pop.Connection, songs []spotify.RecentlyPlayedItem) FetchedSongs {
 	fetchedSongs := FetchedSongs{
 		db:      d,
 		fetched: songs,
@@ -28,8 +29,8 @@ func CreateFetchedSongs(d *pop.Connection, songs []spotify.RecentlyPlayedItem) F
 }
 
 // TransformAndInsertIntoDatabase will convert and insert recently played songs into database.
-func (s *FetchedSongs) TransformAndInsertIntoDatabase() error {
-	s.convertRecentlyToDBTables()
+func (s *FetchedSongs) TransformAndInsertIntoDatabase(log *logrus.Entry) error {
+	s.convertRecentlyToDBTables(log)
 	err := s.db.Create(&s.tracks)
 	if err != nil {
 		return errors.Errorf("Could not insert tracks: %v", err)
@@ -46,20 +47,20 @@ func (s *FetchedSongs) TransformAndInsertIntoDatabase() error {
 	if err != nil {
 		return errors.Errorf("Could not insert artist track connections: %v", err)
 	}
-	LOG.Debugf("Added %d new tracks, %d new artists and %d history tracks", len(s.tracks), len(s.artists), len(s.history))
+	log.Debugf("Added %d new tracks, %d new artists and %d history tracks", len(s.tracks), len(s.artists), len(s.history))
 	return nil
 }
 
 // convertRecentlyToDBTables will convert API json to database models.
 // It will also exclude Tracks and Artists that already exists in database.
-func (s *FetchedSongs) convertRecentlyToDBTables() {
+func (s *FetchedSongs) convertRecentlyToDBTables(log *logrus.Entry) {
 	for _, song := range s.fetched {
 		s.history = append(s.history, convertToHistoryEntry(song))
 
 		track := convertToTrackEntry(song)
 		trackInserted, err := s.trackAlreadyInserted(track.ID)
 		if err != nil {
-			LOG.Errorf("Song %v could not be added: %v\n", song, err)
+			log.Errorf("Song %v could not be added: %v\n", song, err)
 			continue
 		}
 		if !trackInserted {
@@ -70,7 +71,7 @@ func (s *FetchedSongs) convertRecentlyToDBTables() {
 			for _, art := range arts {
 				artInserted, err := s.artistAlreadyInserted(art.ID)
 				if err != nil {
-					LOG.Errorf("Artist %v could not be added: %v\n", art, err)
+					log.Errorf("Artist %v could not be added: %v\n", art, err)
 					continue
 				}
 				if !artInserted {

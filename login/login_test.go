@@ -13,11 +13,12 @@ import (
 )
 
 var hook *logtest.Hook
+var log *logrus.Entry
 
 func TestMain(m *testing.M) {
 	var logger *logrus.Logger
 	logger, hook = logtest.NewNullLogger()
-	initLogger(logger)
+	log = initLogger(logger)
 
 	code := m.Run()
 	os.Exit(code)
@@ -34,18 +35,20 @@ func TestLogin_SaveToken(t *testing.T) {
 	tokenName, err := uuid.NewV4()
 	assert.NoError(t, err)
 
-	tim := time.Now()
+	t.Run("ValidToken", func(t *testing.T) {
+		tim := time.Now()
 
-	err = login.SaveToken(tokenName.String(), &oauth2.Token{
-		AccessToken:  "aaa",
-		TokenType:    "ttt",
-		RefreshToken: "rrr",
-		Expiry:       tim,
+		err = login.SaveToken(tokenName.String(), &oauth2.Token{
+			AccessToken:  "aaa",
+			TokenType:    "ttt",
+			RefreshToken: "rrr",
+			Expiry:       tim,
+		})
+		assert.NoError(t, err)
+
+		err = os.Remove(tokenName.String())
+		assert.NoError(t, err)
 	})
-	assert.NoError(t, err)
-
-	err = os.Remove(tokenName.String())
-	assert.NoError(t, err)
 }
 
 func TestCreateCodeVerifier(t *testing.T) {
