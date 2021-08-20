@@ -1,7 +1,7 @@
 package spotifySaver
 
 import (
-	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
+	"github.com/elivlo/SpotifyHistorySaver/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/zmb3/spotify/v2"
 	"testing"

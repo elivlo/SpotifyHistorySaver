@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
-	"github.com/elivlo/SpotifyHistoryPlaybackSaver/spotifySaver"
+	"github.com/elivlo/SpotifyHistorySaver/login"
+	"github.com/elivlo/SpotifyHistorySaver/spotifySaver"
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/sirupsen/logrus"

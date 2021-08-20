@@ -1,7 +1,7 @@
 package spotifySaver
 
 import (
-	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
+	"github.com/elivlo/SpotifyHistorySaver/models"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

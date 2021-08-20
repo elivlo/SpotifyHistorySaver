@@ -1,4 +1,4 @@
-module github.com/elivlo/SpotifyHistoryPlaybackSaver
+module github.com/elivlo/SpotifyHistorySaver
 
 go 1.15
 

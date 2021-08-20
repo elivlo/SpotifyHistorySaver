@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
+	"github.com/elivlo/SpotifyHistorySaver/models"
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gofrs/uuid"
