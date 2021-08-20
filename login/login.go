@@ -22,14 +22,18 @@ import (
 )
 
 const (
+	// TokenFileName is the standard file name to save the OAuth token to
 	TokenFileName = "token.json"
 )
 
+// Auth is the interface Login implements. It supports log in to the Spotify account.
+// You can also save the token to a file.
 type Auth interface {
 	Login(clientID, clientSecret string) (*oauth2.Token, error)
 	SaveToken(string, *oauth2.Token) error
 }
 
+// Login is the type to use when logging into a Spotify account.
 type Login struct {
 	logger        *logrus.Entry
 	callbackURI   string
@@ -40,6 +44,8 @@ type Login struct {
 	codeChallenge string
 }
 
+// NewLogin creates a new Login with the given callbackURL to listen on.
+// It will also create a code verifier for this login.
 func NewLogin(callbackURL string) Login {
 	login := Login{
 		logger:       initLogger(logrus.New()),
@@ -151,7 +157,7 @@ func createCodeVerifier(size int) string {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	b := make([]byte, size)
-	for i, _ := range b {
+	for i := range b {
 		b[i] = byte(r.Intn(255))
 	}
 

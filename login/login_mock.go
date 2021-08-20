@@ -5,12 +5,13 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// MockedAuth implements the Auth interface for tests.
 type MockedAuth struct {
 	LError bool
 	SError bool
 }
 
-// Login wil open a http server to log in to your account to get a newly created OAuth2 token.
+// Login will return a token or error.
 func (l MockedAuth) Login(_, _ string) (*oauth2.Token, error) {
 	if l.LError {
 		return nil, errors.New("login error")
@@ -18,7 +19,7 @@ func (l MockedAuth) Login(_, _ string) (*oauth2.Token, error) {
 	return &oauth2.Token{}, nil
 }
 
-// SaveToken will save access and refresh token to token.json file in exec directory.
+// SaveToken mocks saving the token.
 func (l MockedAuth) SaveToken(_ string, _ *oauth2.Token) error {
 	if l.SError {
 		return errors.New("save error")
