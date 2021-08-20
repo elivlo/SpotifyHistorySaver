@@ -129,7 +129,7 @@ func (s *SpotifySaver) getLastEntry() models.HistoryEntry {
 func (s *SpotifySaver) fetchNewSongs(last models.HistoryEntry) []spotify.RecentlyPlayedItem {
 	songs, err := s.client.PlayerRecentlyPlayedOpt(context.Background(), &spotify.RecentlyPlayedOptions{
 		Limit:        50,
-		AfterEpochMs: last.PlayedAt.Unix()*1000 + 1,
+		AfterEpochMs: last.PlayedAt.Unix()*1000 + 1000,
 	})
 	if err != nil {
 		s.log.Error("Could not get recently played songs: ", err)

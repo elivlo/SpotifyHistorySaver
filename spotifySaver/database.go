@@ -48,7 +48,7 @@ func (s *FetchedSongs) TransformAndInsertIntoDatabase(log *logrus.Entry) error {
 	if err != nil {
 		return errors.Errorf("Could not insert artist track connections: %v", err)
 	}
-	log.Debugf("Added %d new tracks, %d new artists and %d history tracks", len(s.tracks), len(s.artists), len(s.history))
+	log.Infof("Added %d new tracks, %d new artists and %d history tracks", len(s.tracks), len(s.artists), len(s.history))
 	return nil
 }
 
