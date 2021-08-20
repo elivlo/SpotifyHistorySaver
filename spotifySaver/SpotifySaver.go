@@ -64,7 +64,7 @@ func (s *SpotifySaver) LoadToken(file string) error {
 		return err
 	}
 
-	if !s.token.Valid() || s.token.RefreshToken == "" {
+	if !s.token.Valid() && s.token.RefreshToken == "" {
 		return errors.New(fmt.Sprintf("token expired at %v", s.token.Expiry))
 	}
 	return nil

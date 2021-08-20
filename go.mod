@@ -16,6 +16,7 @@ require (
 	github.com/gobuffalo/plush/v4 v4.1.6 // indirect
 	github.com/gobuffalo/pop/v5 v5.3.4
 	github.com/gobuffalo/validate/v3 v3.3.0 // indirect
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/jackc/pgx/v4 v4.13.0 // indirect
 	github.com/jmoiron/sqlx v1.3.4 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect

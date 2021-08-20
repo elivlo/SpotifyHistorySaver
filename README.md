@@ -1,4 +1,4 @@
-# Spotify History Playback Saver
+# Spotify History Saver
 This service is used to save your Spotify history every 45 minutes. The fetched songs are saved in a MySQL database.
 It uses OAuth to log into Spotify.
 
