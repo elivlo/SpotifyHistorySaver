@@ -19,12 +19,12 @@ import (
 
 const (
 	// EnvClientID is the env variable name for spotify client id
-	EnvClientID     = "CLIENT_ID"
+	EnvClientID = "CLIENT_ID"
 	// EnvClientSecret is the env variable name for spotify client secret
 	EnvClientSecret = "CLIENT_SECRET"
 	// GoEnv is the env variable that defines in which stage the app is running
 	// (development/production/test)
-	GoEnv           = "GO_ENV"
+	GoEnv = "GO_ENV"
 
 	// CallbackURI is the URL used to log in to the spotify account
 	CallbackURI = "http://localhost:8080/callback"

@@ -19,7 +19,7 @@ var DB *pop.Connection
 func TestMain(m *testing.M) {
 	var (
 		logger *logrus.Logger
-		err error
+		err    error
 	)
 	logger, hook = logtest.NewNullLogger()
 	initLogger(logger)
@@ -49,13 +49,11 @@ func TestInitEnvVariables(t *testing.T) {
 	assert.Equal(t, "", sec)
 	assert.Equal(t, fmt.Sprintf("env key: %s not set", EnvClientID), err.Error())
 
-
 	envy.Set(EnvClientID, "client_id123")
 	id, sec, err = initEnvVariables()
 	assert.Equal(t, "client_id123", id)
 	assert.Equal(t, "", sec)
 	assert.Equal(t, fmt.Sprintf("env key: %s not set", EnvClientSecret), err.Error())
-
 
 	envy.Set(EnvClientSecret, "client_secret123")
 	id, sec, err = initEnvVariables()

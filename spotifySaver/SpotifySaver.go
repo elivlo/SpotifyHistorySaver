@@ -38,8 +38,8 @@ type SpotifySaver struct {
 	token        *oauth2.Token
 	auth         *spotifyauth.Authenticator
 	client       *spotify.Client
-	log *logrus.Entry
-	env string
+	log          *logrus.Entry
+	env          string
 }
 
 // NewSpotifySaver will create a new SpotifySaver instance with database connection.
@@ -51,8 +51,8 @@ func NewSpotifySaver(log *logrus.Entry, env string) (*SpotifySaver, error) {
 	}
 	return &SpotifySaver{
 		dbConnection: tx,
-		log: log,
-		env: env,
+		log:          log,
+		env:          env,
 	}, nil
 }
 

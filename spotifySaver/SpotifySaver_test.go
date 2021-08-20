@@ -129,7 +129,7 @@ func TestSpotifySaver_getLastEntry(t *testing.T) {
 	assert.NoError(t, err)
 
 	entry := saver.getLastEntry()
-	assert.Equal(t, time.Unix(0,0), entry.PlayedAt)
+	assert.Equal(t, time.Unix(0, 0), entry.PlayedAt)
 }
 
 func TestSpotifySaver_fetchNewSongs(t *testing.T) {
@@ -142,7 +142,7 @@ func TestSpotifySaver_fetchNewSongs(t *testing.T) {
 	saver.client = spotify.New(saver.auth.Client(context.Background(), &oauth2.Token{}))
 
 	items := saver.fetchNewSongs(models.HistoryEntry{
-		PlayedAt: time.Unix(0,0),
+		PlayedAt: time.Unix(0, 0),
 	})
 	assert.Equal(t, 0, len(items))
 }
@@ -152,7 +152,7 @@ func TestSpotifySaver_InsertNewSongs(t *testing.T) {
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)
-	
+
 	saver.insertNewSongs([]spotify.RecentlyPlayedItem{{
 		Track:           spotify.SimpleTrack{},
 		PlayedAt:        time.Now(),

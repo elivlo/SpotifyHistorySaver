@@ -31,14 +31,14 @@ func TestFetchedSongs_convertRecentlyToDBTables(t *testing.T) {
 	hook, log := getLogger()
 
 	songs := NewFetchedSongs(DB, []spotify.RecentlyPlayedItem{{
-		Track:           spotify.SimpleTrack{
+		Track: spotify.SimpleTrack{
 			Artists: []spotify.SimpleArtist{{
 				Name: "a_name",
 				ID:   "a_id",
 			}},
-			ID:      "t_id",
+			ID: "t_id",
 		},
-		PlayedAt:        time.Now(),
+		PlayedAt: time.Now(),
 		PlaybackContext: spotify.PlaybackContext{
 			ExternalURLs: nil,
 			Endpoint:     "endpoint",
@@ -104,7 +104,7 @@ func TestFetchedSongs_artistAlreadyInserted(t *testing.T) {
 func TestConvertToHistoryEntry(t *testing.T) {
 	now := time.Now()
 	song := spotify.RecentlyPlayedItem{
-		Track:    spotify.SimpleTrack{
+		Track: spotify.SimpleTrack{
 			ID: "t_id",
 		},
 		PlayedAt: now,
@@ -117,7 +117,7 @@ func TestConvertToHistoryEntry(t *testing.T) {
 
 func TestConvertToTrackEntry(t *testing.T) {
 	song := spotify.RecentlyPlayedItem{
-		Track:    spotify.SimpleTrack{
+		Track: spotify.SimpleTrack{
 			DiscNumber:  1,
 			Explicit:    true,
 			ID:          "t_id",
@@ -136,12 +136,12 @@ func TestConvertToTrackEntry(t *testing.T) {
 
 func TestConvertToArtistEntries(t *testing.T) {
 	song := spotify.RecentlyPlayedItem{
-		Track:    spotify.SimpleTrack{
-			Artists:     []spotify.SimpleArtist{{
+		Track: spotify.SimpleTrack{
+			Artists: []spotify.SimpleArtist{{
 				Name: "a_name",
 				ID:   "a_id",
 			}},
-			ID:          "t_id",
+			ID: "t_id",
 		},
 	}
 
