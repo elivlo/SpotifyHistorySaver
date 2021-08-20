@@ -112,7 +112,7 @@ func TestConvertToHistoryEntry(t *testing.T) {
 
 	entry := convertToHistoryEntry(song)
 	assert.Equal(t, now, entry.PlayedAt)
-	assert.Equal(t, "t_id", entry.TrackId)
+	assert.Equal(t, "t_id", entry.TrackID)
 }
 
 func TestConvertToTrackEntry(t *testing.T) {
@@ -159,7 +159,7 @@ func TestConvertToArtistEntries(t *testing.T) {
 func TestGetLastHistoryEntry(t *testing.T) {
 	now := time.Now()
 	entry := models.HistoryEntry{
-		TrackId:  "t_id",
+		TrackID:  "t_id",
 		PlayedAt: now,
 	}
 	err := DB.Create(&entry)
@@ -168,6 +168,6 @@ func TestGetLastHistoryEntry(t *testing.T) {
 	e, err := getLastHistoryEntry(DB)
 	assert.NoError(t, err)
 
-	assert.Equal(t, "t_id", e.TrackId)
+	assert.Equal(t, "t_id", e.TrackID)
 	assert.Equal(t, 1, e.ID)
 }

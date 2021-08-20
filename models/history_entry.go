@@ -8,7 +8,7 @@ import (
 // HistoryEntry is used by pop to map your .model.Name.Proper.Pluralize.Underscore database table to your go code.
 type HistoryEntry struct {
 	ID       int       `json:"id" db:"id"`
-	TrackId  string    `json:"track_id" db:"track_id"`
+	TrackID  string    `json:"track_id" db:"track_id"`
 	PlayedAt time.Time `json:"played_at" db:"played_at"`
 }
 

@@ -123,7 +123,7 @@ func (s *FetchedSongs) artistAlreadyInserted(id string) (bool, error) {
 
 func convertToHistoryEntry(song spotify.RecentlyPlayedItem) models.HistoryEntry {
 	return models.HistoryEntry{
-		TrackId:  song.Track.ID.String(),
+		TrackID:  song.Track.ID.String(),
 		PlayedAt: song.PlayedAt,
 	}
 }
