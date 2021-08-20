@@ -47,14 +47,14 @@ func TestInitEnvVariables(t *testing.T) {
 	id, sec, err := initEnvVariables()
 	assert.Equal(t, "", id)
 	assert.Equal(t, "", sec)
-	assert.Equal(t, fmt.Sprintf("Env key: %s not set", EnvClientID), err.Error())
+	assert.Equal(t, fmt.Sprintf("env key: %s not set", EnvClientID), err.Error())
 
 
 	envy.Set(EnvClientID, "client_id123")
 	id, sec, err = initEnvVariables()
 	assert.Equal(t, "client_id123", id)
 	assert.Equal(t, "", sec)
-	assert.Equal(t, fmt.Sprintf("Env key: %s not set", EnvClientSecret), err.Error())
+	assert.Equal(t, fmt.Sprintf("env key: %s not set", EnvClientSecret), err.Error())
 
 
 	envy.Set(EnvClientSecret, "client_secret123")
@@ -87,11 +87,11 @@ func TestLogin(t *testing.T) {
 
 	mock.SError = true
 	err = loginAccount(mock)
-	assert.Contains(t, err.Error(), "Could not save token to file:")
+	assert.Contains(t, err.Error(), "could not save token to file:")
 
 	mock.LError = true
 	err = loginAccount(mock)
-	assert.Contains(t, err.Error(), "Could not get token:")
+	assert.Contains(t, err.Error(), "could not get token:")
 }
 
 func TestStartApp(t *testing.T) {
@@ -102,7 +102,7 @@ func TestStartApp(t *testing.T) {
 
 	mock.LError = true
 	err = startApp(&mock)
-	assert.Contains(t, err.Error(), "Could not load token:")
+	assert.Contains(t, err.Error(), "could not load token:")
 }
 
 func TestStartSubCommands(t *testing.T) {
