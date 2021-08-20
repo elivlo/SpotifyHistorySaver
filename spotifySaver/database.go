@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// FetchedSongs type will be used for inserting newly pulled Spotify history entries to the database.
 type FetchedSongs struct {
 	db      *pop.Connection
 	fetched []spotify.RecentlyPlayedItem

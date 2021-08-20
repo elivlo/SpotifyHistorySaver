@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// MockedSpotifySaver implements the InterfaceSpotifySaver interface for tests.
 type MockedSpotifySaver struct {
 	LError bool
 }

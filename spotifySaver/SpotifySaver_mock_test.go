@@ -17,12 +17,12 @@ func TestMockedSpotifySaver_LoadToken(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestMockedSpotifySaver_Authenticate(t *testing.T) {
+func TestMockedSpotifySaver_Authenticate(_ *testing.T) {
 	mock := MockedSpotifySaver{}
 	mock.Authenticate("", "", "")
 }
 
-func TestMockedSpotifySaver_StartLastSongsWorker(t *testing.T) {
+func TestMockedSpotifySaver_StartLastSongsWorker(_ *testing.T) {
 	mock := MockedSpotifySaver{}
 	var wg sync.WaitGroup
 

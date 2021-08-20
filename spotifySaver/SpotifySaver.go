@@ -3,7 +3,6 @@ package spotifySaver
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/login"
 	"github.com/elivlo/SpotifyHistoryPlaybackSaver/models"
@@ -18,9 +17,13 @@ import (
 )
 
 const (
+	// TokenFileName is the standard file name to save the OAuth token to
 	TokenFileName = "token.json"
 )
 
+// InterfaceSpotifySaver is the interface SpotifySaver implements.
+// It supports loading a token and authenticating with it.
+// The main purpose is to start the StartLastSongsWorker to periodically save the history.
 type InterfaceSpotifySaver interface {
 	LoadToken(file string) error
 	Authenticate(callbackURI, clientID, clientSecret string)
@@ -28,6 +31,8 @@ type InterfaceSpotifySaver interface {
 }
 
 // SpotifySaver will handle all the saving logic.
+// It supports loading a token and authenticating with it.
+// The main purpose is to start the StartLastSongsWorker to periodically save the history.
 type SpotifySaver struct {
 	dbConnection *pop.Connection
 	token        *oauth2.Token
@@ -42,7 +47,7 @@ type SpotifySaver struct {
 func NewSpotifySaver(log *logrus.Entry, env string) (*SpotifySaver, error) {
 	tx, err := pop.Connect(env)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Could not connect to database: %v", err))
+		return nil, fmt.Errorf("Could not connect to database: %v", err)
 	}
 	return &SpotifySaver{
 		dbConnection: tx,
@@ -65,7 +70,7 @@ func (s *SpotifySaver) LoadToken(file string) error {
 	}
 
 	if !s.token.Valid() && s.token.RefreshToken == "" {
-		return errors.New(fmt.Sprintf("token expired at %v", s.token.Expiry))
+		return fmt.Errorf("token expired at %v", s.token.Expiry)
 	}
 	return nil
 }
