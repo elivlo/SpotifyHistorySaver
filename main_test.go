@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 	)
 	logger, hook = logtest.NewNullLogger()
 	initLogger(logger)
-	envy.Set(GO_ENV, "test")
+	envy.Set(GoEnv, "test")
 	DB, err = pop.Connect("test")
 	if err != nil {
 		fmt.Println("Could not connect to test database")
@@ -34,30 +34,30 @@ func TestMain(m *testing.M) {
 }
 
 func TestInitLogger(t *testing.T) {
-	LOG.Error("test error")
+	log.Error("test error")
 	assert.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 	assert.Equal(t, "test error", hook.LastEntry().Message)
 	hook.Reset()
 }
 
 func TestInitEnvVariables(t *testing.T) {
-	envy.Set(ENV_CLIENT_ID, "")
-	envy.Set(ENV_CLIENT_SECRET, "")
+	envy.Set(EnvClientID, "")
+	envy.Set(EnvClientSecret, "")
 
 	id, sec, err := initEnvVariables()
 	assert.Equal(t, "", id)
 	assert.Equal(t, "", sec)
-	assert.Equal(t, fmt.Sprintf("Env key: %s not set", ENV_CLIENT_ID), err.Error())
+	assert.Equal(t, fmt.Sprintf("Env key: %s not set", EnvClientID), err.Error())
 
 
-	envy.Set(ENV_CLIENT_ID, "client_id123")
+	envy.Set(EnvClientID, "client_id123")
 	id, sec, err = initEnvVariables()
 	assert.Equal(t, "client_id123", id)
 	assert.Equal(t, "", sec)
-	assert.Equal(t, fmt.Sprintf("Env key: %s not set", ENV_CLIENT_SECRET), err.Error())
+	assert.Equal(t, fmt.Sprintf("Env key: %s not set", EnvClientSecret), err.Error())
 
 
-	envy.Set(ENV_CLIENT_SECRET, "client_secret123")
+	envy.Set(EnvClientSecret, "client_secret123")
 	id, sec, err = initEnvVariables()
 	assert.Equal(t, "client_id123", id)
 	assert.Equal(t, "client_secret123", sec)
@@ -97,11 +97,11 @@ func TestLogin(t *testing.T) {
 func TestStartApp(t *testing.T) {
 	mock := spotifySaver.MockedSpotifySaver{LError: false}
 
-	err := StartApp(&mock)
+	err := startApp(&mock)
 	assert.NoError(t, err)
 
 	mock.LError = true
-	err = StartApp(&mock)
+	err = startApp(&mock)
 	assert.Contains(t, err.Error(), "Could not load token:")
 }
 
@@ -114,23 +114,23 @@ func TestStartSubCommands(t *testing.T) {
 	err := pop.DropDB(DB)
 	assert.NoError(t, err)
 
-	err, ready := StartSubCommands(nil, nil)
+	ready, err := startSubCommands(nil, nil)
 	assert.NoError(t, err)
 	assert.True(t, ready)
 
 	*loginFlag = true
-	err, ready = StartSubCommands(nil, mock)
+	ready, err = startSubCommands(nil, mock)
 	assert.NoError(t, err)
 	assert.False(t, ready)
 
 	*createDb = true
-	err, ready = StartSubCommands(DB, mock)
+	ready, err = startSubCommands(DB, mock)
 	assert.NoError(t, err)
 	assert.False(t, ready)
 
 	*createDb = false
 	*migrate = true
-	err, ready = StartSubCommands(DB, mock)
+	ready, err = startSubCommands(DB, mock)
 	assert.NoError(t, err)
 	assert.False(t, ready)
 }

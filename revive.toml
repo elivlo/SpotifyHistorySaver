@@ -28,4 +28,5 @@ warningCode = 0
 [rule.unused-parameter]
 [rule.unreachable-code]
 [rule.redefines-builtin-id]
-
+[rule.confusing-naming]
+[rule.unnecessary-stmt]

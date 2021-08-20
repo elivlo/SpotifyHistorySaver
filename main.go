@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
@@ -19,21 +18,26 @@ import (
 )
 
 const (
-	ENV_CLIENT_ID     = "CLIENT_ID"
-	ENV_CLIENT_SECRET = "CLIENT_SECRET"
-	GO_ENV            = "GO_ENV"
+	// EnvClientID is the env variable name for spotify client id
+	EnvClientID     = "CLIENT_ID"
+	// EnvClientSecret is the env variable name for spotify client secret
+	EnvClientSecret = "CLIENT_SECRET"
+	// GoEnv is the env variable that defines in which stage the app is running
+	// (development/production/test)
+	GoEnv           = "GO_ENV"
 
+	// CallbackURI is the URL used to log in to the spotify account
 	CallbackURI = "http://localhost:8080/callback"
 )
 
 var (
-	LOG          *logrus.Entry
-	ENV          string
-	ClientId     string
-	ClientSecret string
-	createDb = flag.Bool("create_db", false, "create_db: will create the database")
-	migrate = flag.Bool("migrate", false, "migrate: will migrate the current schema into db")
-	loginFlag = flag.Bool("login", false, "login: will get you an OAuth2 token for further usage")
+	log          *logrus.Entry
+	env          string
+	clientID     string
+	clientSecret string
+	createDb     = flag.Bool("create_db", false, "create_db: will create the database")
+	migrate      = flag.Bool("migrate", false, "migrate: will migrate the current schema into db")
+	loginFlag    = flag.Bool("login", false, "login: will get you an OAuth2 token for further usage")
 )
 
 // init logging
@@ -43,29 +47,29 @@ func initLogger(logger *logrus.Logger) {
 		FieldsOrder: []string{"component", "category"},
 		HideKeys:    true,
 	})
-	LOG = logger.WithField("component", "SpotifyPlaybackSaver")
-	LOG.Info("Setup SpotifyPlaybackSaver...")
+	log = logger.WithField("component", "SpotifyPlaybackSaver")
+	log.Info("Setup SpotifyPlaybackSaver...")
 }
 
 // load env variables
 func initEnvVariables() (string, string, error) {
-	cId, err := envy.MustGet(ENV_CLIENT_ID)
-	if err != nil || cId == "" {
-		return cId, "", errors.New(fmt.Sprintf("Env key: %s not set", ENV_CLIENT_ID))
+	cID, err := envy.MustGet(EnvClientID)
+	if err != nil || cID == "" {
+		return cID, "", fmt.Errorf("env key: %s not set", EnvClientID)
 	}
-	cSec, err := envy.MustGet(ENV_CLIENT_SECRET)
+	cSec, err := envy.MustGet(EnvClientSecret)
 	if err != nil || cSec == "" {
-		return cId, cSec, errors.New(fmt.Sprintf("Env key: %s not set", ENV_CLIENT_SECRET))
+		return cID, cSec, fmt.Errorf("env key: %s not set", EnvClientSecret)
 	}
-	ENV = envy.Get(GO_ENV, "development")
+	env = envy.Get(GoEnv, "development")
 
-	return cId, cSec, nil
+	return cID, cSec, nil
 }
 
 func createDB(c *pop.Connection) error {
 	err := pop.CreateDB(c)
 	if err != nil && strings.Contains(err.Error(), "database exists") {
-		return errors.New(fmt.Sprintf("Could not connect to database: %v", err))
+		return fmt.Errorf("could not connect to database: %v", err)
 	}
 	return nil
 }
@@ -73,56 +77,56 @@ func createDB(c *pop.Connection) error {
 func migrateDB(c *pop.Connection) error {
 	box, err := pop.NewMigrationBox(packr.New("migrations", "./migrations"), c)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Could not load migrations: %s", err))
+		return fmt.Errorf("could not load migrations: %s", err)
 	}
 	err = box.Up()
 	if err != nil {
-		return errors.New(fmt.Sprintf("Could not migrate: %s", err))
+		return fmt.Errorf("could not migrate: %s", err)
 	}
 	return nil
 }
 
 func loginAccount(auth login.Auth) error {
-	LOG.Info("Start login to your account...")
-	token, err := auth.Login(ClientId, ClientSecret)
+	log.Info("Start login to your account...")
+	token, err := auth.Login(clientID, clientSecret)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Could not get token: %v", err))
+		return fmt.Errorf("could not get token: %v", err)
 	}
 
 	err = auth.SaveToken(login.TokenFileName, token)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Could not save token to file: %v", err))
+		return fmt.Errorf("could not save token to file: %v", err)
 	}
 	return nil
 }
 
-func StartSubCommands(db *pop.Connection, auth login.Auth) (error, bool) {
+func startSubCommands(db *pop.Connection, auth login.Auth) (bool, error) {
 	flag.Parse()
 
 	if *createDb {
-		return createDB(db), false
+		return false, createDB(db)
 	}
 
 	if *migrate {
-		return migrateDB(db), false
+		return false, migrateDB(db)
 	}
 
 	if *loginFlag {
-		return loginAccount(auth), false
+		return false, loginAccount(auth)
 	}
 
-	return nil, true
+	return true, nil
 }
 
-func StartApp(s spotifySaver.InterfaceSpotifySaver) error {
-	LOG.Info("Start listening to your spotify history...")
+func startApp(s spotifySaver.InterfaceSpotifySaver) error {
+	log.Info("Start listening to your spotify history...")
 	var wg sync.WaitGroup
 
 	err := s.LoadToken(spotifySaver.TokenFileName)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Could not load token: %v", err))
+		return fmt.Errorf("could not load token: %v", err)
 	}
-	s.Authenticate(CallbackURI, ClientId, ClientSecret)
+	s.Authenticate(CallbackURI, clientID, clientSecret)
 
 	stop := make(chan bool, 1)
 	c := make(chan os.Signal, 1)
@@ -137,7 +141,7 @@ func StartApp(s spotifySaver.InterfaceSpotifySaver) error {
 	go s.StartLastSongsWorker(&wg, stop)
 
 	wg.Wait()
-	LOG.Info("Shutting down...")
+	log.Info("Shutting down...")
 
 	return nil
 }
@@ -147,28 +151,28 @@ func init() {
 
 	initLogger(logrus.New())
 
-	ClientId, ClientSecret, err = initEnvVariables()
+	clientID, clientSecret, err = initEnvVariables()
 	if err != nil {
-		LOG.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
 func main() {
-	err, ready := StartSubCommands(models.DB, login.NewLogin(CallbackURI))
+	ready, err := startSubCommands(models.DB, login.NewLogin(CallbackURI))
 	if err != nil {
-		LOG.Error(err)
+		log.Error(err)
 	}
 
 	if !ready {
 		return
 	}
 
-	s, err := spotifySaver.NewSpotifySaver(LOG, ENV)
+	s, err := spotifySaver.NewSpotifySaver(log, env)
 	if err != nil {
-		LOG.Fatal(err)
+		log.Fatal(err)
 	}
-	err = StartApp(s)
+	err = startApp(s)
 	if err != nil {
-		LOG.Fatal(err)
+		log.Fatal(err)
 	}
 }
