@@ -8,11 +8,11 @@ import (
 func TestMockedAuth_Login(t *testing.T) {
 	mock := MockedAuth{}
 
-	_, err := mock.Login("", "")
+	_, err := mock.Login()
 	assert.NoError(t, err)
 
 	mock.LError = true
-	_, err = mock.Login("", "")
+	_, err = mock.Login()
 	assert.Error(t, err)
 }
 

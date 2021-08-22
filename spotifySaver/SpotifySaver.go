@@ -152,7 +152,7 @@ func (s *SpotifySaver) saveNewToken(fileName string) {
 	if err != nil {
 		s.log.Error("Could not get current client token: ", err)
 	}
-	err = login.NewLogin("").SaveToken(fileName, token)
+	err = login.NewLogin("", "", "").SaveToken(fileName, token)
 	if err != nil {
 		s.log.Error("Could not save current client token ", err)
 	}

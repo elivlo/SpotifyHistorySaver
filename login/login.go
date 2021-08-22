@@ -29,7 +29,7 @@ const (
 // Auth is the interface Login implements. It supports log in to the Spotify account.
 // You can also save the token to a file.
 type Auth interface {
-	Login(clientID, clientSecret string) (*oauth2.Token, error)
+	Login() (*oauth2.Token, error)
 	SaveToken(string, *oauth2.Token) error
 }
 
@@ -46,7 +46,7 @@ type Login struct {
 
 // NewLogin creates a new Login with the given callbackURL to listen on.
 // It will also create a code verifier for this login.
-func NewLogin(callbackURL string) Login {
+func NewLogin(callbackURL, clientID, clientSecret string) Login {
 	login := Login{
 		logger:       initLogger(logrus.New()),
 		callbackURI:  callbackURL,
@@ -56,17 +56,17 @@ func NewLogin(callbackURL string) Login {
 	}
 	login.codeChallenge = createVerifierChallenge(login.codeVerifier)
 
-	return login
-}
-
-// Login wil open a http server to log in to your account to get a newly created OAuth2 token.
-func (l Login) Login(clientID, clientSecret string) (*oauth2.Token, error) {
 	// creates new Authenticator
-	l.auth = spotifyauth.New(spotifyauth.WithRedirectURL(l.callbackURI),
+	login.auth = spotifyauth.New(spotifyauth.WithRedirectURL(login.callbackURI),
 		spotifyauth.WithScopes(spotifyauth.ScopeUserReadRecentlyPlayed),
 		spotifyauth.WithClientID(clientID),
 		spotifyauth.WithClientSecret(clientSecret))
 
+	return login
+}
+
+// Login wil open a http server to log in to your account to get a newly created OAuth2 token.
+func (l Login) Login() (*oauth2.Token, error) {
 	// start HTTP callback server
 	http.HandleFunc("/callback", l.authHandler)
 	go func() {

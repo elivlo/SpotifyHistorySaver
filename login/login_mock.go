@@ -14,7 +14,7 @@ type MockedAuth struct {
 }
 
 // Login will return a token or error.
-func (l MockedAuth) Login(_, _ string) (*oauth2.Token, error) {
+func (l MockedAuth) Login() (*oauth2.Token, error) {
 	if l.LError {
 		return nil, errors.New("login error")
 	}
@@ -29,6 +29,7 @@ func (l MockedAuth) SaveToken(_ string, _ *oauth2.Token) error {
 	return nil
 }
 
+// SpotifyAuthenticatior is an interface for spotifyauth.Authenticator
 type SpotifyAuthenticatior interface {
 	AuthURL(state string, opts ...oauth2.AuthCodeOption) string
 	Token(ctx context.Context, state string, r *http.Request, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
@@ -36,14 +37,17 @@ type SpotifyAuthenticatior interface {
 	Client(ctx context.Context, token *oauth2.Token) *http.Client
 }
 
+// MockedSpotifyauthAuthenticator implements interface SpotifyAuthenticatior for tests
 type MockedSpotifyauthAuthenticator struct {
 	FailToken bool
 }
 
+// NewMockedSpotifyauthAuthenticator creates a MockedSpotifyauthAuthenticator for tests
 func NewMockedSpotifyauthAuthenticator(failToken bool) *MockedSpotifyauthAuthenticator {
 	return &MockedSpotifyauthAuthenticator{FailToken: failToken}
 }
 
+// AuthURL returns a URL to the the Spotify Accounts Service's OAuth2 endpoint.
 func (a MockedSpotifyauthAuthenticator) AuthURL(_ string, _ ...oauth2.AuthCodeOption) string {
 	return "authUrl"
 }
@@ -70,22 +74,25 @@ func (a MockedSpotifyauthAuthenticator) Client(_ context.Context, _ *oauth2.Toke
 	return &http.Client{}
 }
 
-
+// MockedResponseWriter implements http.ResponseWriter for tests
 type MockedResponseWriter struct {
 	body       []byte
 	statusCode int
 	header     http.Header
 }
 
+// Header returns the HTTP header
 func (w *MockedResponseWriter) Header() http.Header {
 	return w.header
 }
 
+// Write writes some bytes to the body
 func (w *MockedResponseWriter) Write(b []byte) (int, error) {
 	w.body = append(w.body, b...)
 	return len(b), nil
 }
 
+// WriteHeader sets the status code
 func (w *MockedResponseWriter) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
 }

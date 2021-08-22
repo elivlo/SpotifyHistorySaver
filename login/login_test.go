@@ -28,13 +28,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewLogin(t *testing.T) {
-	login := NewLogin("url.123")
+	login := NewLogin("url.123", "", "")
 
 	assert.Equal(t, login.callbackURI, "url.123")
 }
 
 func TestLogin_SaveToken(t *testing.T) {
-	login := NewLogin("url.123")
+	login := NewLogin("url.123", "", "")
 	tokenName, err := uuid.NewV4()
 	assert.NoError(t, err)
 

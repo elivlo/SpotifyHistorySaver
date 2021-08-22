@@ -88,7 +88,7 @@ func migrateDB(c *pop.Connection) error {
 
 func loginAccount(auth login.Auth) error {
 	log.Info("Start login to your account...")
-	token, err := auth.Login(clientID, clientSecret)
+	token, err := auth.Login()
 	if err != nil {
 		return fmt.Errorf("could not get token: %v", err)
 	}
@@ -158,7 +158,7 @@ func init() {
 }
 
 func main() {
-	ready, err := startSubCommands(models.DB, login.NewLogin(CallbackURI))
+	ready, err := startSubCommands(models.DB, login.NewLogin(CallbackURI, clientID, clientSecret))
 	if err != nil {
 		log.Error(err)
 	}
