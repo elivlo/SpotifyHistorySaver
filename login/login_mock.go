@@ -5,18 +5,24 @@ import (
 	"errors"
 	"golang.org/x/oauth2"
 	"net/http"
+	"time"
 )
 
 // MockedAuth implements the Auth interface for tests.
 type MockedAuth struct {
+	LError bool
 	SError bool
 }
 
 // Login will return a token or error.
 func (l MockedAuth) Login() *oauth2.Token {
+	if l.LError {
+		return &oauth2.Token{}
+	}
 	return &oauth2.Token{
 		AccessToken:  "accessToken",
 		RefreshToken: "refreshToken",
+		Expiry:       time.Now().Add(time.Hour),
 	}
 }
 

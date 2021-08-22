@@ -90,10 +90,9 @@ func loginAccount(auth login.Auth) error {
 	log.Info("Start login to your account...")
 	token := auth.Login()
 
-	// TODO: Wieder handeln
-	/*if err != nil {
-		return fmt.Errorf("could not get token: %v", err)
-	}*/
+	if !token.Valid() {
+		return fmt.Errorf("could not get valid token: %v", token)
+	}
 
 	err := auth.SaveToken(login.TokenFileName, token)
 	if err != nil {

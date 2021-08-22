@@ -84,6 +84,10 @@ func TestLogin(t *testing.T) {
 	mock.SError = true
 	err = loginAccount(mock)
 	assert.Contains(t, err.Error(), "could not save token to file:")
+
+	mock.LError = true
+	err = loginAccount(mock)
+	assert.Contains(t, err.Error(), "could not get valid token:")
 }
 
 func TestStartApp(t *testing.T) {
