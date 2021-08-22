@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewLogin(t *testing.T) {
-	login := NewLogin("url.123", "", "")
+	login := NewLogin("url.123", "cID", "cSec")
 
 	assert.Equal(t, login.callbackURI, "url.123")
 }

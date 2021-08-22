@@ -1,7 +1,6 @@
 package login
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -17,7 +16,6 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 )
 
@@ -86,15 +84,7 @@ func (l Login) Login() (*oauth2.Token, error) {
 	// wait for auth to complete
 	token := <-l.ch
 
-	// use the token to get an authenticated client
-	client := spotify.New(l.auth.Client(context.Background(), token))
-	// use the client to make calls that require authorization
-	user, err := client.CurrentUser(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	l.logger.Info("You are logged in as: ", user.ID)
+	l.logger.Info("You are logged in")
 	return token, nil
 }
 
