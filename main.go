@@ -148,17 +148,17 @@ func startApp(s spotifySaver.InterfaceSpotifySaver) error {
 }
 
 func init() {
-	var err error
-
 	initLogger(logrus.New())
+}
 
+func main() {
+	var err error
+	
 	clientID, clientSecret, err = initEnvVariables()
 	if err != nil {
 		log.Fatal(err)
 	}
-}
 
-func main() {
 	ready, err := startSubCommands(models.DB, login.NewLogin(CallbackURI, clientID, clientSecret))
 	if err != nil {
 		log.Error(err)
