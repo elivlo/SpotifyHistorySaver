@@ -1,0 +1,69 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+        
+    - name: Setup mysql
+      uses: mirromutth/mysql-action@v1.1
+      with:
+        mysql database: 'spotify_history_saver_test'
+        mysql user: 'test'
+        mysql password: 'test'
+        
+        
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Test
+      run: go test -coverprofile=c.out ./...
+      
+    - name: Install goveralls
+      run: go install github.com/mattn/goveralls@latest
+      
+    - name: Send coverage report
+      env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: goveralls -coverprofile=c.out -service=github
+      
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+        
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+          
+    - name: Install revive
+      run: go install github.com/mgechev/revive
+          
+    - name: Lint code
+      run: revive -config revive.toml -formatter stylish $(go list ./... | grep -v /vendor/)
