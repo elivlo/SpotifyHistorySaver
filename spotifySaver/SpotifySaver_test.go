@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/elivlo/SpotifyHistorySaver/models"
-	"github.com/gobuffalo/envy"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
@@ -21,7 +21,7 @@ import (
 
 var DB *pop.Connection
 
-func getLogger() (*logtest.Hook, *logrus.Entry) {
+func getTestLogger() (*logtest.Hook, *logrus.Entry) {
 	logger, hook := logtest.NewNullLogger()
 	logger.Level = logrus.DebugLevel
 	log := logger.WithField("test", "test")
@@ -32,12 +32,14 @@ func getLogger() (*logtest.Hook, *logrus.Entry) {
 func TestMain(m *testing.M) {
 	var err error
 
-	envy.Set("GO_ENV", "test")
 	DB, err = pop.Connect("test")
 	if err != nil {
 		fmt.Println("Could not connect to test database")
 		os.Exit(1)
 	}
+	_ = pop.CreateDB(DB)
+	box, _ := pop.NewMigrationBox(packr.New("migrations", "../migrations"), DB)
+	_ = box.Up()
 	_ = DB.TruncateAll()
 
 	code := m.Run()
@@ -45,7 +47,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewSpotifySaver(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)
@@ -57,7 +59,7 @@ func TestNewSpotifySaver(t *testing.T) {
 }
 
 func TestSpotifySaver_LoadToken(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)
@@ -114,7 +116,7 @@ func TestSpotifySaver_LoadToken(t *testing.T) {
 }
 
 func TestSpotifySaver_Authenticate(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)
@@ -123,7 +125,7 @@ func TestSpotifySaver_Authenticate(t *testing.T) {
 }
 
 func TestSpotifySaver_getLastEntry(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)
@@ -133,7 +135,7 @@ func TestSpotifySaver_getLastEntry(t *testing.T) {
 }
 
 func TestSpotifySaver_fetchNewSongs(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)
@@ -148,7 +150,7 @@ func TestSpotifySaver_fetchNewSongs(t *testing.T) {
 }
 
 func TestSpotifySaver_InsertNewSongs(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)
@@ -161,7 +163,7 @@ func TestSpotifySaver_InsertNewSongs(t *testing.T) {
 }
 
 func TestSpotifySaver_SaveNewToken(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 
 	saver, err := NewSpotifySaver(log, "test")
 	assert.NoError(t, err)

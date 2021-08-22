@@ -20,7 +20,7 @@ func TestNewFetchedSongs(t *testing.T) {
 }
 
 func TestFetchedSongs_TransformAndInsertIntoDatabase(t *testing.T) {
-	_, log := getLogger()
+	_, log := getTestLogger()
 	songs := NewFetchedSongs(DB, []spotify.RecentlyPlayedItem{})
 
 	err := songs.TransformAndInsertIntoDatabase(log)
@@ -28,7 +28,7 @@ func TestFetchedSongs_TransformAndInsertIntoDatabase(t *testing.T) {
 }
 
 func TestFetchedSongs_convertRecentlyToDBTables(t *testing.T) {
-	hook, log := getLogger()
+	hook, log := getTestLogger()
 
 	songs := NewFetchedSongs(DB, []spotify.RecentlyPlayedItem{{
 		Track: spotify.SimpleTrack{

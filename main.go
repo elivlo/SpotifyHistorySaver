@@ -153,7 +153,7 @@ func init() {
 
 func main() {
 	var err error
-	
+
 	clientID, clientSecret, err = initEnvVariables()
 	if err != nil {
 		log.Fatal(err)
