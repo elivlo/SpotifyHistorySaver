@@ -63,7 +63,7 @@ jobs:
           ${{ runner.os }}-go-
           
     - name: Install revive
-      run: go install github.com/mgechev/revive
+      run: go install github.com/mgechev/revive@latest
           
     - name: Lint code
       run: revive -config revive.toml -formatter stylish $(go list ./... | grep -v /vendor/)
