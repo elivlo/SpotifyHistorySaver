@@ -62,10 +62,9 @@ func TestInitEnvVariables(t *testing.T) {
 }
 
 func TestCreateDB(t *testing.T) {
-	err := pop.DropDB(DB)
-	assert.NoError(t, err)
+	_ = pop.DropDB(DB)
 
-	err = createDB(DB)
+	err := createDB(DB)
 	assert.NoError(t, err)
 }
 

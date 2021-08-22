@@ -135,6 +135,7 @@ func (s *SpotifySaver) fetchNewSongs(last models.HistoryEntry) []spotify.Recentl
 		s.log.Error("Could not get recently played songs: ", err)
 	}
 
+	s.log.Infof("Fetched %d new RecentlyPlayedItems", len(songs))
 	return songs
 }
 
