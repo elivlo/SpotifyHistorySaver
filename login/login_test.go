@@ -7,6 +7,8 @@ import (
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
+	"net/http"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -18,6 +20,7 @@ var log *logrus.Entry
 func TestMain(m *testing.M) {
 	var logger *logrus.Logger
 	logger, hook = logtest.NewNullLogger()
+	logger.ExitFunc = func(i int) {}
 	log = initLogger(logger)
 
 	code := m.Run()
@@ -48,6 +51,71 @@ func TestLogin_SaveToken(t *testing.T) {
 
 		err = os.Remove(tokenName.String())
 		assert.NoError(t, err)
+	})
+}
+
+func TestLogin_authHandler(t *testing.T) {
+	l := Login{
+		logger:        log,
+		ch:            make(chan *oauth2.Token),
+		auth:          NewMockedSpotifyauthAuthenticator(false),
+		state:         "state123",
+	}
+
+	t.Run("Success", func(t *testing.T) {
+		go func() {
+			_ = <-l.ch
+		}()
+
+		urlValues := url.Values{}
+		urlValues.Set("state", "state123")
+		r := &http.Request{
+			Form: urlValues,
+		}
+		w := &MockedResponseWriter{}
+		l.authHandler(w, r)
+
+		assert.Contains(t, string(w.body), "Login Completed!")
+	})
+
+	t.Run("Fail_state", func(t *testing.T) {
+		go func() {
+			_ = <-l.ch
+		}()
+
+		urlValues := url.Values{}
+		urlValues.Set("state", "state")
+		r := &http.Request{
+			Form: urlValues,
+		}
+		w := &MockedResponseWriter{
+			header: http.Header{},
+		}
+
+		l.authHandler(w, r)
+		assert.Contains(t, string(w.body), "404 page not found")
+		assert.Equal(t, logrus.FatalLevel, hook.LastEntry().Level)
+	})
+
+	t.Run("Fail_Token", func(t *testing.T) {
+		login := Login{
+			logger:        log,
+			ch:            make(chan *oauth2.Token),
+			auth:          NewMockedSpotifyauthAuthenticator(true),
+		}
+
+		go func() {
+			_ = <-login.ch
+		}()
+
+		r := &http.Request{}
+		w := &MockedResponseWriter{
+			header: http.Header{},
+		}
+
+		login.authHandler(w, r)
+		assert.Contains(t, string(w.body), "Couldn't get token")
+		assert.Equal(t, logrus.FatalLevel, hook.LastEntry().Level)
 	})
 }
 

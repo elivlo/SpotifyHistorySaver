@@ -1,8 +1,10 @@
 package login
 
 import (
+	"context"
 	"errors"
 	"golang.org/x/oauth2"
+	"net/http"
 )
 
 // MockedAuth implements the Auth interface for tests.
@@ -27,7 +29,7 @@ func (l MockedAuth) SaveToken(_ string, _ *oauth2.Token) error {
 	return nil
 }
 
-/*type SpotifyAuthenticatior interface {
+type SpotifyAuthenticatior interface {
 	AuthURL(state string, opts ...oauth2.AuthCodeOption) string
 	Token(ctx context.Context, state string, r *http.Request, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
@@ -35,11 +37,11 @@ func (l MockedAuth) SaveToken(_ string, _ *oauth2.Token) error {
 }
 
 type MockedSpotifyauthAuthenticator struct {
-	config *oauth2.Config
+	FailToken bool
 }
 
-func NewMockedSpotifyauthAuthenticator(_ ...spotifyauth.AuthenticatorOption) *MockedSpotifyauthAuthenticator {
-	return &MockedSpotifyauthAuthenticator{}
+func NewMockedSpotifyauthAuthenticator(failToken bool) *MockedSpotifyauthAuthenticator {
+	return &MockedSpotifyauthAuthenticator{FailToken: failToken}
 }
 
 func (a MockedSpotifyauthAuthenticator) AuthURL(_ string, _ ...oauth2.AuthCodeOption) string {
@@ -50,6 +52,9 @@ func (a MockedSpotifyauthAuthenticator) AuthURL(_ string, _ ...oauth2.AuthCodeOp
 // it for an access token.  The standard use case is to call Token from the handler
 // that handles requests to your application's redirect URL.
 func (a MockedSpotifyauthAuthenticator) Token(_ context.Context, _ string, _ *http.Request, _ ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	if a.FailToken {
+		return nil, errors.New("No token")
+	}
 	return &oauth2.Token{}, nil
 }
 
@@ -63,4 +68,24 @@ func (a MockedSpotifyauthAuthenticator) Exchange(_ context.Context, _ string, _ 
 // Combine this with spotify.HTTPClientOpt.
 func (a MockedSpotifyauthAuthenticator) Client(_ context.Context, _ *oauth2.Token) *http.Client {
 	return &http.Client{}
-}*/
+}
+
+
+type MockedResponseWriter struct {
+	body       []byte
+	statusCode int
+	header     http.Header
+}
+
+func (w *MockedResponseWriter) Header() http.Header {
+	return w.header
+}
+
+func (w *MockedResponseWriter) Write(b []byte) (int, error) {
+	w.body = append(w.body, b...)
+	return len(b), nil
+}
+
+func (w *MockedResponseWriter) WriteHeader(statusCode int) {
+	w.statusCode = statusCode
+}

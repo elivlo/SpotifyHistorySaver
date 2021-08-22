@@ -37,8 +37,8 @@ type Auth interface {
 type Login struct {
 	logger        *logrus.Entry
 	callbackURI   string
-	ch            chan *spotify.Client
-	auth          *spotifyauth.Authenticator
+	ch            chan *oauth2.Token
+	auth          SpotifyAuthenticatior
 	state         string
 	codeVerifier  string
 	codeChallenge string
@@ -52,7 +52,7 @@ func NewLogin(callbackURL string) Login {
 		callbackURI:  callbackURL,
 		state:        createCodeVerifier(20),
 		codeVerifier: createCodeVerifier(96),
-		ch:           make(chan *spotify.Client),
+		ch:           make(chan *oauth2.Token),
 	}
 	login.codeChallenge = createVerifierChallenge(login.codeVerifier)
 
@@ -84,16 +84,18 @@ func (l Login) Login(clientID, clientSecret string) (*oauth2.Token, error) {
 	l.logger.Info("Please log in to Spotify by visiting the following page in your browser: ", ur)
 
 	// wait for auth to complete
-	client := <-l.ch
+	token := <-l.ch
 
+	// use the token to get an authenticated client
+	client := spotify.New(l.auth.Client(context.Background(), token))
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser(context.Background())
 	if err != nil {
-		l.logger.Fatal(err)
+		return nil, err
 	}
-	l.logger.Info("You are logged in as: ", user.ID)
 
-	return client.Token()
+	l.logger.Info("You are logged in as: ", user.ID)
+	return token, nil
 }
 
 // SaveToken will save access and refresh token to token.json file in exec directory.
@@ -131,15 +133,13 @@ func (l Login) authHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if st := r.FormValue("state"); st != l.state {
 		http.NotFound(w, r)
-		l.logger.Fatalf("State mismatch: %s != %s\n", st, l.state)
+		l.logger.Fatalf("State mismatch: %s != %s", st, l.state)
 	}
-	// use the token to get an authenticated client
-	client := spotify.New(l.auth.Client(r.Context(), token))
 	_, err = fmt.Fprintf(w, "Login Completed!")
 	if err != nil {
 		l.logger.Fatal(err)
 	}
-	l.ch <- client
+	l.ch <- token
 }
 
 // initLogger inits a logger with "ACCOUNT LOGIN" prefix.
