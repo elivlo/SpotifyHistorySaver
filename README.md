@@ -1,4 +1,17 @@
 # Spotify History Saver
+
+<p align="left">
+    <a href="LICENSE">
+        <img alt="GitHub" src="https://img.shields.io/github/license/elivlo/SpotifyHistorySaver">
+    </a>
+    <a href="https://github.com/elivlo/SpotifyHistorySaver/actions/workflows/test.yml">
+        <img src="https://github.com/elivlo/SpotifyHistorySaver/actions/workflows/test.yml/badge.svg">
+    </a>
+    <a href="https://coveralls.io/github/elivlo/SpotifyHistorySaver?branch=master">
+        <img src="https://coveralls.io/repos/github/elivlo/SpotifyHistorySaver/badge.svg?branch=master">
+    </a>
+<p>
+
 This service is used to save your Spotify history every 45 minutes. The fetched songs are saved in a MySQL database.
 It uses OAuth to log into Spotify.
 
@@ -8,10 +21,10 @@ It uses OAuth to log into Spotify.
 1. Create a Spotify application at: https://developer.spotify.com/dashboard/applications
 2. Run `bin/activate` and build with `go build`
 3. Create `.env` file out of `.env.example` and add client credentials
-    + Don't forget to create database and load schema with `./SpotifyPlaybackSaver -create_db` and `./SpotifyPlaybackSaver -migrate`
-    + Also add db credentials to `.env` file
+   + Don't forget to create database and load schema with `./SpotifyPlaybackSaver -create_db` and `./SpotifyPlaybackSaver -migrate`
+   + Also add db credentials to `.env` file
 4. Generate OAuth token with `./SpotifyPlaybackSaver -login`
-    + That will generate a `token.json` file with credentials
+   + That will generate a `token.json` file with credentials
 5. Start `./SpotifyPlaybackSaver` and enjoy!
 
 ### Database schema
