@@ -27,7 +27,7 @@ const (
 // Auth is the interface Login implements. It supports log in to the Spotify account.
 // You can also save the token to a file.
 type Auth interface {
-	Login() (*oauth2.Token, error)
+	Login() *oauth2.Token
 	SaveToken(string, *oauth2.Token) error
 }
 
@@ -64,12 +64,20 @@ func NewLogin(callbackURL, clientID, clientSecret string) Login {
 }
 
 // Login wil open a http server to log in to your account to get a newly created OAuth2 token.
-func (l Login) Login() (*oauth2.Token, error) {
-	// start HTTP callback server
-	http.HandleFunc("/callback", l.authHandler)
+func (l Login) Login() *oauth2.Token {
+	// setup http server
+	servMux := http.NewServeMux()
+	servMux.HandleFunc("/callback", l.authHandler)
+	server := http.Server{
+		Addr: ":8080",
+		Handler: servMux,
+	}
+
+	// run http server
 	go func() {
-		err := http.ListenAndServe(":8080", nil)
+		err := server.ListenAndServe()
 		if err != nil {
+			l.ch <- nil
 			l.logger.Fatal(err)
 		}
 	}()
@@ -84,8 +92,10 @@ func (l Login) Login() (*oauth2.Token, error) {
 	// wait for auth to complete
 	token := <-l.ch
 
+	_ = server.Close()
+
 	l.logger.Info("You are logged in")
-	return token, nil
+	return token
 }
 
 // SaveToken will save access and refresh token to token.json file in exec directory.

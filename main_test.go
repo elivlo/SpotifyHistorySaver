@@ -75,7 +75,6 @@ func TestMigrateDB(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	mock := login.MockedAuth{
-		LError: false,
 		SError: false,
 	}
 
@@ -85,10 +84,6 @@ func TestLogin(t *testing.T) {
 	mock.SError = true
 	err = loginAccount(mock)
 	assert.Contains(t, err.Error(), "could not save token to file:")
-
-	mock.LError = true
-	err = loginAccount(mock)
-	assert.Contains(t, err.Error(), "could not get token:")
 }
 
 func TestStartApp(t *testing.T) {
@@ -104,7 +99,6 @@ func TestStartApp(t *testing.T) {
 
 func TestStartSubCommands(t *testing.T) {
 	mock := login.MockedAuth{
-		LError: false,
 		SError: false,
 	}
 

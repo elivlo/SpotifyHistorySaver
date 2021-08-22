@@ -1,7 +1,6 @@
 package login
 
 import (
-	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
@@ -33,6 +32,43 @@ func TestNewLogin(t *testing.T) {
 	assert.Equal(t, login.callbackURI, "url.123")
 }
 
+func TestLogin_Login(t *testing.T) {
+	tim := time.Now()
+	l := Login{
+		logger:        log,
+		ch:            make(chan *oauth2.Token),
+		auth:          MockedSpotifyauthAuthenticator{},
+		state:         "state123",
+	}
+
+	t.Run("Success", func(t *testing.T) {
+		tok := &oauth2.Token{
+			AccessToken:  "accessToken",
+			RefreshToken: "refreshToken",
+			Expiry:       tim,
+		}
+		go func() {
+			l.ch <- tok
+		}()
+		token := l.Login()
+		assert.Equal(t, tok, token)
+	})
+
+	t.Run("Port_used", func(t *testing.T) {
+		server := http.Server{
+			Addr: ":8080",
+		}
+		go func() {
+			_ = server.ListenAndServe()
+		}()
+
+		_ = l.Login()
+		assert.Contains(t, hook.Levels(), logrus.FatalLevel)
+
+		_ = server.Close()
+	})
+}
+
 func TestLogin_SaveToken(t *testing.T) {
 	login := NewLogin("url.123", "", "")
 	tokenName, err := uuid.NewV4()
@@ -58,7 +94,7 @@ func TestLogin_authHandler(t *testing.T) {
 	l := Login{
 		logger:        log,
 		ch:            make(chan *oauth2.Token),
-		auth:          NewMockedSpotifyauthAuthenticator(false),
+		auth:          MockedSpotifyauthAuthenticator{},
 		state:         "state123",
 	}
 
@@ -101,7 +137,7 @@ func TestLogin_authHandler(t *testing.T) {
 		login := Login{
 			logger:        log,
 			ch:            make(chan *oauth2.Token),
-			auth:          NewMockedSpotifyauthAuthenticator(true),
+			auth:          MockedSpotifyauthAuthenticator{true},
 		}
 
 		go func() {
@@ -126,7 +162,6 @@ func TestCreateCodeVerifier(t *testing.T) {
 
 func TestCreateVerifierChallenge(t *testing.T) {
 	code := createVerifierChallenge("12345abcde")
-	fmt.Println(code)
 	assert.Equal(t, "PDc_SVO4XN6liOBDbBNMgZ9XC3LB23QOs1z8lCuqK84", code)
 }
 

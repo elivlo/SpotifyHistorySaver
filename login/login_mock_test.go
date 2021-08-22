@@ -2,18 +2,19 @@ package login
 
 import (
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 	"testing"
 )
 
 func TestMockedAuth_Login(t *testing.T) {
 	mock := MockedAuth{}
 
-	_, err := mock.Login()
-	assert.NoError(t, err)
+	tok := mock.Login()
+	assert.Equal(t, &oauth2.Token{
+		AccessToken:  "accessToken",
+		RefreshToken: "refreshToken",
+	}, tok)
 
-	mock.LError = true
-	_, err = mock.Login()
-	assert.Error(t, err)
 }
 
 func TestMockedAuth_SaveToken(t *testing.T) {

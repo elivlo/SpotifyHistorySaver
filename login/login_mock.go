@@ -9,16 +9,15 @@ import (
 
 // MockedAuth implements the Auth interface for tests.
 type MockedAuth struct {
-	LError bool
 	SError bool
 }
 
 // Login will return a token or error.
-func (l MockedAuth) Login() (*oauth2.Token, error) {
-	if l.LError {
-		return nil, errors.New("login error")
+func (l MockedAuth) Login() *oauth2.Token {
+	return &oauth2.Token{
+		AccessToken:  "accessToken",
+		RefreshToken: "refreshToken",
 	}
-	return &oauth2.Token{}, nil
 }
 
 // SaveToken mocks saving the token.
@@ -42,14 +41,9 @@ type MockedSpotifyauthAuthenticator struct {
 	FailToken bool
 }
 
-// NewMockedSpotifyauthAuthenticator creates a MockedSpotifyauthAuthenticator for tests
-func NewMockedSpotifyauthAuthenticator(failToken bool) *MockedSpotifyauthAuthenticator {
-	return &MockedSpotifyauthAuthenticator{FailToken: failToken}
-}
-
 // AuthURL returns a URL to the the Spotify Accounts Service's OAuth2 endpoint.
 func (a MockedSpotifyauthAuthenticator) AuthURL(_ string, _ ...oauth2.AuthCodeOption) string {
-	return "authUrl"
+	return "http://test.test/test"
 }
 
 // Token pulls an authorization code from an HTTP request and attempts to exchange

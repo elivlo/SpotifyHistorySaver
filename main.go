@@ -88,12 +88,14 @@ func migrateDB(c *pop.Connection) error {
 
 func loginAccount(auth login.Auth) error {
 	log.Info("Start login to your account...")
-	token, err := auth.Login()
-	if err != nil {
-		return fmt.Errorf("could not get token: %v", err)
-	}
+	token := auth.Login()
 
-	err = auth.SaveToken(login.TokenFileName, token)
+	// TODO: Wieder handeln
+	/*if err != nil {
+		return fmt.Errorf("could not get token: %v", err)
+	}*/
+
+	err := auth.SaveToken(login.TokenFileName, token)
 	if err != nil {
 		return fmt.Errorf("could not save token to file: %v", err)
 	}
